@@ -50,6 +50,8 @@ asciicam
 
 On first start, allow **ASCII Camera** to use the camera. Select **OBS Virtual Camera** in Arc, Zoom, Teams, or another compatible app.
 
+If `asciicam status` launches the old browser on port 4173, remove the stale `alias asciicam=.../start.command` line from `~/.zshrc`, open a new terminal, and try again. Shell aliases take precedence over the installed `/usr/local/bin/asciicam` command.
+
 ## Commands
 
 ```text

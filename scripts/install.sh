@@ -47,3 +47,9 @@ echo "You may uninstall OBS now; do not remove $DAL_PLUGIN."
 echo
 echo "Quit OBS, then quit and reopen Arc, Zoom, Teams, Slack, or Discord. Run: asciicam"
 echo "Select ‘OBS Virtual Camera’ in the calling app. Chrome, Safari, and Apple apps block legacy camera plug-ins."
+
+if [[ -f "$HOME/.zshrc" ]] && grep -Eq '^[[:space:]]*alias[[:space:]]+asciicam=.*start\.command' "$HOME/.zshrc"; then
+  echo
+  echo "WARNING: ~/.zshrc still aliases asciicam to the old browser launcher."
+  echo "Remove that alias and open a new terminal before using the native command."
+fi
