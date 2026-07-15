@@ -36,23 +36,28 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         let input = try AVCaptureDeviceInput(device: camera)
 
         session.beginConfiguration()
-        defer { session.commitConfiguration() }
-        session.sessionPreset = .hd1280x720
-        guard session.canAddInput(input) else { throw CaptureError.cannotAddInput }
-        session.addInput(input)
+        do {
+            session.sessionPreset = .hd1280x720
+            guard session.canAddInput(input) else { throw CaptureError.cannotAddInput }
+            session.addInput(input)
 
-        output.alwaysDiscardsLateVideoFrames = true
-        output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
-        output.setSampleBufferDelegate(self, queue: queue)
-        guard session.canAddOutput(output) else { throw CaptureError.cannotAddOutput }
-        session.addOutput(output)
+            output.alwaysDiscardsLateVideoFrames = true
+            output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+            output.setSampleBufferDelegate(self, queue: queue)
+            guard session.canAddOutput(output) else { throw CaptureError.cannotAddOutput }
+            session.addOutput(output)
 
-        if let connection = output.connection(with: .video), connection.isVideoMirroringSupported {
-            // Mirroring is performed in the renderer so its sampling orientation
-            // exactly matches the browser implementation.
-            connection.isVideoMirrored = false
+            if let connection = output.connection(with: .video), connection.isVideoMirroringSupported {
+                // Mirroring is performed in the renderer so its sampling orientation
+                // exactly matches the browser implementation.
+                connection.isVideoMirrored = false
+            }
+            session.commitConfiguration()
+        } catch {
+            session.commitConfiguration()
+            throw error
         }
-        session.startRunning()
+        queue.async { [session] in session.startRunning() }
         logger.notice("Capturing from \(camera.localizedName, privacy: .public)")
     }
 

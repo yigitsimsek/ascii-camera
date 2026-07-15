@@ -26,6 +26,14 @@ func runTests() throws {
     try expect(renderer.rows == 16, "48 columns at 16:9 should produce 16 rows")
     try expect(bufferContainsBothBlackAndWhite(result), "rendered gradient should contain glyph and background pixels")
 
+    renderer.settings = RenderSettings()
+    let defaultRenderStart = DispatchTime.now().uptimeNanoseconds
+    guard let defaultResult = renderer.render(source) else { throw TestFailure.failed("240-column renderer returned nil") }
+    let defaultRenderMilliseconds = Double(DispatchTime.now().uptimeNanoseconds - defaultRenderStart) / 1_000_000
+    try expect(renderer.rows == 78, "240 columns at 16:9 should produce 78 rows")
+    try expect(bufferContainsBothBlackAndWhite(defaultResult), "240-column output should contain glyph and background pixels")
+    print(String(format: "240-column render: %.1f ms", defaultRenderMilliseconds))
+
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     let url = directory.appendingPathComponent("frames")
     let writer = try SharedFrameStore(url: url, width: 8, height: 4)

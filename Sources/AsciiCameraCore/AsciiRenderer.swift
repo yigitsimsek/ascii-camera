@@ -52,7 +52,7 @@ public final class AsciiRenderer: @unchecked Sendable {
     private let colorSpace = CGColorSpaceCreateDeviceRGB()
     private let internalKernels: [Kernel]
     private let externalKernels: [Kernel]
-    private let glyphVectors: [[Float]]
+    private let glyphVectors: [SIMD8<Float>]
     private let fontName: CFString = "Menlo" as CFString
 
     private var sampler: CVPixelBuffer?
@@ -207,8 +207,10 @@ public final class AsciiRenderer: @unchecked Sendable {
         return total > 0 ? sum / total : 0
     }
 
-    private func enhancedVector(cellIndex: Int) -> [Float] {
-        var vector = Array(internalBuffer[(cellIndex * 6)..<(cellIndex * 6 + 6)])
+    private func enhancedVector(cellIndex: Int) -> SIMD8<Float> {
+        var vector = SIMD8<Float>(repeating: 0)
+        let internalStart = cellIndex * 6
+        for index in 0..<6 { vector[index] = internalBuffer[internalStart + index] }
         let externalStart = cellIndex * 10
         for index in 0..<6 {
             var maximum = vector[index]
@@ -220,7 +222,8 @@ public final class AsciiRenderer: @unchecked Sendable {
             }
         }
 
-        let maximum = vector.max() ?? 0
+        var maximum: Float = 0
+        for index in 0..<6 { maximum = max(maximum, vector[index]) }
         if maximum > 0.0001 {
             for index in 0..<6 {
                 vector[index] = pow(vector[index] / maximum, settings.shapeContrast) * maximum
@@ -229,9 +232,9 @@ public final class AsciiRenderer: @unchecked Sendable {
         return vector
     }
 
-    private func bestCharacter(for vector: [Float]) -> Character {
+    private func bestCharacter(for vector: SIMD8<Float>) -> Character {
         var key = 0
-        var quantized = [Float](repeating: 0, count: 6)
+        var quantized = SIMD8<Float>(repeating: 0)
         for index in 0..<6 {
             let value = min(Self.cacheRange - 1, Int(floor(vector[index] * Float(Self.cacheRange))))
             quantized[index] = (Float(value) + 0.5) / Float(Self.cacheRange)
@@ -322,7 +325,7 @@ public final class AsciiRenderer: @unchecked Sendable {
         return Kernel(taps: taps)
     }
 
-    private static func buildGlyphDatabase(fontName: CFString) -> [[Float]] {
+    private static func buildGlyphDatabase(fontName: CFString) -> [SIMD8<Float>] {
         let width = 96
         let height = 144
         let font = CTFontCreateWithName(fontName, 128, nil)
@@ -352,7 +355,11 @@ public final class AsciiRenderer: @unchecked Sendable {
             for index in 0..<6 { maxima[index] = max(maxima[index], vector[index]) }
         }
         return rawVectors.map { vector in
-            vector.enumerated().map { maxima[$0.offset] > 0 ? $0.element / maxima[$0.offset] : 0 }
+            var normalized = SIMD8<Float>(repeating: 0)
+            for index in 0..<6 {
+                normalized[index] = maxima[index] > 0 ? vector[index] / maxima[index] : 0
+            }
+            return normalized
         }
     }
 
