@@ -1,0 +1,56 @@
+#!/bin/zsh
+set -eu
+
+APP="/Applications/ASCII Camera.app"
+BUNDLE_ID="com.yigit.asciicamera"
+COMMAND="${1:-start}"
+
+case "$COMMAND" in
+  start)
+    if [[ ! -d "$APP" ]]; then
+      echo "ASCII Camera is not installed. Run scripts/install.sh from the repository first."
+      exit 1
+    fi
+    if pgrep -x "ASCII Camera" >/dev/null 2>&1; then
+      echo "ASCII Camera is already running."
+      exit 0
+    fi
+    open -gj -b "$BUNDLE_ID"
+    for _ in {1..30}; do
+      if pgrep -x "ASCII Camera" >/dev/null 2>&1; then
+        echo "ASCII Camera is running. Select ‘ASCII Camera’ in your calling app."
+        exit 0
+      fi
+      sleep 0.1
+    done
+    echo "ASCII Camera did not start. Run ‘asciicam logs’ for diagnostics."
+    exit 1
+    ;;
+  stop)
+    if pkill -x "ASCII Camera" >/dev/null 2>&1; then
+      echo "ASCII Camera stopped."
+    else
+      echo "ASCII Camera was not running."
+    fi
+    ;;
+  status)
+    if pgrep -x "ASCII Camera" >/dev/null 2>&1; then
+      echo "host: running"
+    else
+      echo "host: stopped"
+    fi
+    if systemextensionsctl list 2>/dev/null | grep -q "com.yigit.asciicamera.extension"; then
+      systemextensionsctl list 2>/dev/null | grep "com.yigit.asciicamera.extension"
+    else
+      echo "extension: not activated"
+    fi
+    ;;
+  logs)
+    exec log stream --style compact --level info --predicate 'subsystem BEGINSWITH "com.yigit.asciicamera"'
+    ;;
+  *)
+    echo "Usage: asciicam [start|stop|status|logs]"
+    exit 2
+    ;;
+esac
+

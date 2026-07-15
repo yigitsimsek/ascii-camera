@@ -115,7 +115,7 @@ function updateLabels() {
 }
 
 function resetSettings() {
-  inputs.columns.value = '110';
+  inputs.columns.value = '240';
   inputs.contrast.value = '2.2';
   inputs.directional.value = '1.7';
   inputs.gamma.value = '0.9';
@@ -532,7 +532,7 @@ document.addEventListener('keydown', (event) => {
   if (key === 'i') inputs.invert.click();
   if (key === '[' || key === ']') {
     const delta = key === '[' ? -2 : 2;
-    inputs.columns.value = String(Math.max(48, Math.min(180, Number(inputs.columns.value) + delta)));
+    inputs.columns.value = String(Math.max(48, Math.min(240, Number(inputs.columns.value) + delta)));
     inputs.columns.dispatchEvent(new Event('input'));
   }
 });

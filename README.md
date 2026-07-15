@@ -1,74 +1,94 @@
 # ASCII Camera for macOS
 
-A local, shape-aware ASCII webcam renderer inspired by Alex Harri's article, **“ASCII characters are not pixels.”**
-
-This is not a normal brightness-ramp filter. It:
-
-- Generates a six-dimensional shape vector for every printable ASCII glyph using the actual monospace font.
-- Samples six staggered circular regions inside every camera cell.
-- Samples ten regions outside each cell for widened directional contrast.
-- Applies directional and global contrast enhancement.
-- Uses a quantized 9^6 lookup cache for fast nearest-glyph matching.
-- Renders rows as monospaced strings for a clean OBS-friendly output.
-
-Everything runs locally in the browser. No camera frames are uploaded.
-
-## Run it
-
-### One click on macOS
-
-1. Double-click `start.command`.
-2. Your browser opens at `http://127.0.0.1:4173`.
-3. Click **Start camera** and allow camera access.
-
-If macOS blocks the script, right-click `start.command`, choose **Open**, then approve it.
-
-### From Terminal
+ASCII Camera turns the macOS camera feed into shape-aware ASCII and publishes the result as a real virtual camera named **ASCII Camera**. After one-time installation and macOS approval, starting it is one command:
 
 ```bash
-cd ascii-camera
-python3 -m http.server 4173 --bind 127.0.0.1
+asciicam
 ```
 
-Then open `http://127.0.0.1:4173`.
+There is no browser window, OBS scene, screen capture, start button, Dock icon, or manual routing step.
 
-Camera access requires localhost or HTTPS, so opening `index.html` directly is not enough.
+## What is preserved
 
-## Use it as a camera in Zoom, Meet, Slack, or Discord
+This is the same renderer as the original browser prototype, ported to native Swift rather than replaced with a brightness ramp. It still:
 
-1. Install and open OBS Studio.
-2. Run ASCII Camera and press **H** to hide its controls.
-3. In OBS, add **Window Capture** and select the ASCII Camera browser window.
-4. Crop or fit it to the OBS canvas.
-5. Click **Start Virtual Camera** in OBS.
-6. Select **OBS Virtual Camera** in your calling app.
+- Builds a six-dimensional shape vector for all 95 printable ASCII glyphs using Menlo.
+- Samples six staggered circular regions inside each 6×9 cell.
+- Samples ten neighboring regions for widened directional contrast.
+- Applies the same directional contrast, shape contrast, gamma, mirror, and invert stages.
+- Uses the same quantized 9⁶ nearest-glyph cache.
+- Renders at **240 columns by default** to a 1280×720, 30 fps camera stream.
 
-For a clean browser window, append `?clean=1` to the URL:
+The legacy browser version remains in the repository for reference. Its reset value and keyboard range also use 240 columns now.
+
+## Architecture
+
+The native workflow has two signed components:
+
+1. **Headless host app** — runs in the logged-in user session, requests camera permission, captures the physical or Continuity Camera through AVFoundation, runs the shape-aware renderer, and publishes completed BGRA frames.
+2. **Core Media I/O Camera Extension** — exposes `ASCII Camera` to Meet, Zoom, Slack, FaceTime, and other camera clients. It reads only completed frames from an App Group mmap and sends them as a 1280×720 source stream.
+
+The frame transport is a locked, double-buffered memory map. Camera clients never execute the renderer, a slow client cannot block capture, and the extension never reads a partially written frame.
+
+This split is intentional. Apple runs Camera Extensions in a restricted system sandbox that has no WindowServer access. Keeping capture in the host also lets macOS camera effects remain upstream of ASCII rendering. Portrait mode, Center Stage, Studio Light, and the selected virtual background are preserved when macOS supplies them on the AVFoundation feed. Apple ultimately controls effect availability for each camera and macOS release, so an effect that macOS withholds from an app cannot be reconstructed by ASCII Camera.
+
+## Requirements
+
+- macOS 14 or newer.
+- Full Xcode (Command Line Tools alone cannot build or sign a Camera Extension).
+- An Apple Developer team selected in Xcode. A local development signing team is sufficient for development; distribution to other Macs requires the appropriate Apple signing/provisioning setup.
+
+## Build and install
+
+1. Install Xcode, open it once, and add your Apple ID under **Xcode → Settings → Accounts**.
+2. Find your Team ID in the account details.
+3. From this repository, run:
+
+```bash
+scripts/install.sh YOUR_TEAM_ID
+```
+
+The installer runs the native core tests, builds and signs the app plus Camera Extension, copies the app to `/Applications`, and installs `asciicam` in `/usr/local/bin`.
+
+Then run:
+
+```bash
+asciicam
+```
+
+On the first launch only, macOS requires two security decisions that software cannot bypass:
+
+- Allow **ASCII Camera** to access the camera.
+- Allow its Camera Extension in **System Settings → Privacy & Security** when prompted.
+
+Run `asciicam` once more after approval. Some already-running calling apps cache their camera list and need to be restarted once. From then on, `asciicam` starts capture headlessly and `ASCII Camera` is directly selectable in the calling app.
+
+## Command line
 
 ```text
-http://127.0.0.1:4173/?clean=1
+asciicam          start the headless camera host
+asciicam status   show host and Camera Extension state
+asciicam stop     release the physical camera
+asciicam logs     stream native host/extension diagnostics
 ```
 
-## Controls
+## Tests
 
-- **Columns:** ASCII resolution. Lower is faster and chunkier; higher is denser.
-- **Shape contrast:** exaggerates differences inside each glyph cell.
-- **Directional contrast:** sharpens boundaries using samples outside the cell.
-- **Gamma:** changes camera brightness before glyph matching.
-- **Mirror:** behaves like a normal selfie camera.
-- **Invert:** swaps bright and dark regions.
+The test harness creates a real Core Video gradient frame, renders it to 1280×720 ASCII, verifies the 240-column defaults, and round-trips a BGRA frame through two independently opened shared-frame stores.
 
-Keyboard shortcuts:
-
-```text
-H  show/hide controls
-F  fullscreen
-M  mirror
-I  invert
-[  fewer columns
-]  more columns
+```bash
+scripts/test.sh
 ```
 
-## Notes
+The host and extension sources can also be checked independently with `swiftc`; a full signed end-to-end Camera Extension build requires Xcode by Apple design.
 
-The implementation follows the article's core technique, but it is an independent CPU-oriented implementation rather than the author's exact GPU pipeline. On an Apple Silicon Mac, 80–130 columns should generally be comfortable. Reduce columns if the browser becomes warm or the frame rate drops.
+## Legacy browser prototype
+
+The original HTML/JS renderer still runs with:
+
+```bash
+npm install
+npm start
+```
+
+It is no longer part of the recommended virtual-camera workflow.

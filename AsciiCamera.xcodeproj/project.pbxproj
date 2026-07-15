@@ -1,0 +1,158 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00100000000000000000001 /* RenderSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000001 /* RenderSettings.swift */; };
+		A00100000000000000000002 /* AsciiRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000002 /* AsciiRenderer.swift */; };
+		A00100000000000000000003 /* SharedFrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000003 /* SharedFrameStore.swift */; };
+		A00100000000000000000004 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000004 /* main.swift */; };
+		A00100000000000000000005 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000005 /* AppDelegate.swift */; };
+		A00100000000000000000006 /* CameraCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000006 /* CameraCapture.swift */; };
+		A00100000000000000000007 /* CameraExtensionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000007 /* CameraExtensionManager.swift */; };
+		A00100000000000000000008 /* RenderSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000001 /* RenderSettings.swift */; };
+		A00100000000000000000009 /* SharedFrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000003 /* SharedFrameStore.swift */; };
+		A0010000000000000000000A /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000008 /* main.swift */; };
+		A0010000000000000000000B /* CameraProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000009 /* CameraProvider.swift */; };
+		A0010000000000000000000C /* ASCII Camera Extension.systemextension in Embed System Extensions */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000D /* ASCII Camera Extension.systemextension */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A00100000000000000000010 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000010 /* AppKit.framework */; };
+		A00100000000000000000011 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000011 /* AVFoundation.framework */; };
+		A00100000000000000000012 /* SystemExtensions.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000012 /* SystemExtensions.framework */; };
+		A00100000000000000000013 /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000013 /* VideoToolbox.framework */; };
+		A00100000000000000000014 /* CoreMediaIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000014 /* CoreMediaIO.framework */; };
+		A00100000000000000000015 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000015 /* CoreMedia.framework */; };
+		A00100000000000000000016 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000016 /* CoreVideo.framework */; };
+		A00100000000000000000017 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000017 /* CoreGraphics.framework */; };
+		A00100000000000000000018 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000018 /* CoreText.framework */; };
+		A00100000000000000000019 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000015 /* CoreMedia.framework */; };
+		A0010000000000000000001A /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A00200000000000000000016 /* CoreVideo.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A00300000000000000000001 = {isa = PBXContainerItemProxy; containerPortal = A00900000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A00700000000000000000002; remoteInfo = "ASCII Camera Extension"; };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A00400000000000000000001 /* Embed System Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Library/SystemExtensions";
+			dstSubfolderSpec = 0;
+			files = (A0010000000000000000000C /* ASCII Camera Extension.systemextension in Embed System Extensions */, );
+			name = "Embed System Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		A00200000000000000000001 /* RenderSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderSettings.swift; sourceTree = "<group>"; };
+		A00200000000000000000002 /* AsciiRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsciiRenderer.swift; sourceTree = "<group>"; };
+		A00200000000000000000003 /* SharedFrameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedFrameStore.swift; sourceTree = "<group>"; };
+		A00200000000000000000004 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		A00200000000000000000005 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A00200000000000000000006 /* CameraCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCapture.swift; sourceTree = "<group>"; };
+		A00200000000000000000007 /* CameraExtensionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraExtensionManager.swift; sourceTree = "<group>"; };
+		A00200000000000000000008 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		A00200000000000000000009 /* CameraProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraProvider.swift; sourceTree = "<group>"; };
+		A0020000000000000000000A /* Host.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Host.entitlements; sourceTree = "<group>"; };
+		A0020000000000000000000B /* Extension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Extension.entitlements; sourceTree = "<group>"; };
+		A0020000000000000000000C /* ASCII Camera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ASCII Camera.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0020000000000000000000D /* ASCII Camera Extension.systemextension */ = {isa = PBXFileReference; explicitFileType = "wrapper.system-extension"; includeInIndex = 0; path = "ASCII Camera Extension.systemextension"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0020000000000000000000E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A0020000000000000000000F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A00200000000000000000010 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		A00200000000000000000011 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		A00200000000000000000012 /* SystemExtensions.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemExtensions.framework; path = System/Library/Frameworks/SystemExtensions.framework; sourceTree = SDKROOT; };
+		A00200000000000000000013 /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = System/Library/Frameworks/VideoToolbox.framework; sourceTree = SDKROOT; };
+		A00200000000000000000014 /* CoreMediaIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMediaIO.framework; path = System/Library/Frameworks/CoreMediaIO.framework; sourceTree = SDKROOT; };
+		A00200000000000000000015 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		A00200000000000000000016 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
+		A00200000000000000000017 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		A00200000000000000000018 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A00500000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A00100000000000000000010, A00100000000000000000011, A00100000000000000000012, A00100000000000000000013, A00100000000000000000015, A00100000000000000000016, A00100000000000000000017, A00100000000000000000018, ); runOnlyForDeploymentPostprocessing = 0; };
+		A00500000000000000000002 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A00100000000000000000014, A00100000000000000000019, A0010000000000000000001A, ); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00600000000000000000001 = {isa = PBXGroup; children = (A00600000000000000000002 /* Core */, A00600000000000000000003 /* Host */, A00600000000000000000004 /* Extension */, A00600000000000000000005 /* Frameworks */, A00600000000000000000006 /* Products */, ); sourceTree = "<group>"; };
+		A00600000000000000000002 /* Core */ = {isa = PBXGroup; children = (A00200000000000000000001, A00200000000000000000002, A00200000000000000000003, ); name = Core; path = Sources/AsciiCameraCore; sourceTree = "<group>"; };
+		A00600000000000000000003 /* Host */ = {isa = PBXGroup; children = (A00200000000000000000004, A00200000000000000000005, A00200000000000000000006, A00200000000000000000007, A0020000000000000000000E, A0020000000000000000000A, ); name = Host; path = Native/Host; sourceTree = "<group>"; };
+		A00600000000000000000004 /* Extension */ = {isa = PBXGroup; children = (A00200000000000000000008, A00200000000000000000009, A0020000000000000000000F, A0020000000000000000000B, ); name = Extension; path = Native/Extension; sourceTree = "<group>"; };
+		A00600000000000000000005 /* Frameworks */ = {isa = PBXGroup; children = (A00200000000000000000010, A00200000000000000000011, A00200000000000000000012, A00200000000000000000013, A00200000000000000000014, A00200000000000000000015, A00200000000000000000016, A00200000000000000000017, A00200000000000000000018, ); name = Frameworks; sourceTree = "<group>"; };
+		A00600000000000000000006 /* Products */ = {isa = PBXGroup; children = (A0020000000000000000000C, A0020000000000000000000D, ); name = Products; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00700000000000000000001 /* ASCII Camera */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00A00000000000000000002;
+			buildPhases = (A00800000000000000000001 /* Sources */, A00500000000000000000001 /* Frameworks */, A00400000000000000000001 /* Embed System Extensions */, );
+			buildRules = ();
+			dependencies = (A00B00000000000000000001, );
+			name = "ASCII Camera";
+			productName = "ASCII Camera";
+			productReference = A0020000000000000000000C;
+			productType = "com.apple.product-type.application";
+		};
+		A00700000000000000000002 /* ASCII Camera Extension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00A00000000000000000003;
+			buildPhases = (A00800000000000000000002 /* Sources */, A00500000000000000000002 /* Frameworks */, );
+			buildRules = ();
+			dependencies = ();
+			name = "ASCII Camera Extension";
+			productName = "ASCII Camera Extension";
+			productReference = A0020000000000000000000D;
+			productType = "com.apple.product-type.system-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00900000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1600; LastUpgradeCheck = 1600; TargetAttributes = {A00700000000000000000001 = {CreatedOnToolsVersion = 16.0; }; A00700000000000000000002 = {CreatedOnToolsVersion = 16.0; }; }; };
+			buildConfigurationList = A00A00000000000000000001;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base, );
+			mainGroup = A00600000000000000000001;
+			productRefGroup = A00600000000000000000006;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (A00700000000000000000001, A00700000000000000000002, );
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00800000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A00100000000000000000001, A00100000000000000000002, A00100000000000000000003, A00100000000000000000004, A00100000000000000000005, A00100000000000000000006, A00100000000000000000007, ); runOnlyForDeploymentPostprocessing = 0; };
+		A00800000000000000000002 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A00100000000000000000008, A00100000000000000000009, A0010000000000000000000A, A0010000000000000000000B, ); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A00B00000000000000000001 = {isa = PBXTargetDependency; target = A00700000000000000000002 /* ASCII Camera Extension */; targetProxy = A00300000000000000000001; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A00C00000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_VERSION = 5.0; }; name = Debug; };
+		A00C00000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O"; SWIFT_VERSION = 5.0; }; name = Release; };
+		A00C00000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_ENTITLEMENTS = Native/Host/Host.entitlements; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = YES; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Native/Host/Info.plist; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.yigit.asciicamera; PRODUCT_NAME = "ASCII Camera"; SWIFT_VERSION = 5.0; }; name = Debug; };
+		A00C00000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_ENTITLEMENTS = Native/Host/Host.entitlements; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = YES; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Native/Host/Info.plist; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.yigit.asciicamera; PRODUCT_NAME = "ASCII Camera"; SWIFT_VERSION = 5.0; }; name = Release; };
+		A00C00000000000000000005 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_ENTITLEMENTS = Native/Extension/Extension.entitlements; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Native/Extension/Info.plist; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.yigit.asciicamera.extension; PRODUCT_NAME = "ASCII Camera Extension"; SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; }; name = Debug; };
+		A00C00000000000000000006 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_ENTITLEMENTS = Native/Extension/Extension.entitlements; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Native/Extension/Info.plist; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.yigit.asciicamera.extension; PRODUCT_NAME = "ASCII Camera Extension"; SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A00A00000000000000000001 = {isa = XCConfigurationList; buildConfigurations = (A00C00000000000000000001, A00C00000000000000000002, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A00A00000000000000000002 = {isa = XCConfigurationList; buildConfigurations = (A00C00000000000000000003, A00C00000000000000000004, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A00A00000000000000000003 = {isa = XCConfigurationList; buildConfigurations = (A00C00000000000000000005, A00C00000000000000000006, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = A00900000000000000000001 /* Project object */;
+}
