@@ -13,5 +13,9 @@
         <key>com.yigit.asciicamera.transport-test</key>
         <true/>
     </dict>
+    <key>StandardOutPath</key>
+    <string>/tmp/ascii-camera-transport-test.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/ascii-camera-transport-test.log</string>
 </dict>
 </plist>

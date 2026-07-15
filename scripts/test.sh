@@ -54,21 +54,29 @@ if ! launchctl bootstrap "$TEST_DOMAIN" "$TRANSPORT_TEST_PLIST" 2>/dev/null; the
 fi
 trap 'launchctl bootout "$TEST_JOB" >/dev/null 2>&1 || true' EXIT
 launchctl kickstart -k "$TEST_JOB"
-for _ in {1..50}; do
+for _ in {1..150}; do
   JOB_STATE="$(launchctl print "$TEST_JOB" 2>&1 || true)"
   if [[ "$JOB_STATE" == *"last exit code = 0"* ]]; then
     echo "Legacy IOSurface transport test passed"
     break
   fi
-  if [[ "$JOB_STATE" == *"last exit code ="* ]]; then
+  if [[ "$JOB_STATE" == *"last exit code ="* && "$JOB_STATE" != *"last exit code = (never exited)"* ]]; then
     echo "$JOB_STATE"
+    [[ -f /tmp/ascii-camera-transport-test.log ]] && tail -100 /tmp/ascii-camera-transport-test.log
     echo "Legacy IOSurface transport test failed."
+    exit 1
+  fi
+  if [[ "$JOB_STATE" == *"last terminating signal ="* ]]; then
+    echo "$JOB_STATE"
+    [[ -f /tmp/ascii-camera-transport-test.log ]] && tail -100 /tmp/ascii-camera-transport-test.log
+    echo "Legacy IOSurface transport test crashed."
     exit 1
   fi
   sleep 0.1
 done
 if [[ "${JOB_STATE:-}" != *"last exit code = 0"* ]]; then
   echo "$JOB_STATE"
+  [[ -f /tmp/ascii-camera-transport-test.log ]] && tail -100 /tmp/ascii-camera-transport-test.log
   echo "Legacy IOSurface transport test timed out."
   exit 1
 fi
