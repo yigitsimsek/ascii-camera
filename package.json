@@ -1,0 +1,13 @@
+{
+  "name": "ascii-camera",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shape-aware ASCII webcam renderer for macOS and OBS",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 4173",
+    "start": "vite --host 127.0.0.1 --port 4173"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0"
+  }
+}

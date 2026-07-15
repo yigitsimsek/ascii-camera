@@ -1,0 +1,108 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f5f5f5;
+  background: #000;
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #000; }
+button, select, input { font: inherit; }
+button, select { color: inherit; }
+
+#stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+
+#output {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  image-rendering: auto;
+}
+
+.welcome {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at center, rgba(30,30,30,.85), rgba(0,0,0,.98));
+  z-index: 10;
+}
+
+.welcome.hidden { display: none; }
+.welcome-card { width: min(460px, 100%); text-align: center; }
+.eyebrow { margin-bottom: 14px; font: 600 11px/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; letter-spacing: .18em; opacity: .55; }
+h1 { margin: 0 0 12px; font-size: clamp(40px, 7vw, 72px); line-height: .95; letter-spacing: -.055em; }
+.welcome p { margin: 0 auto 26px; max-width: 380px; color: rgba(255,255,255,.66); line-height: 1.55; }
+
+button, select {
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 9px;
+  background: rgba(255,255,255,.08);
+  padding: 9px 11px;
+  transition: background .15s ease, border-color .15s ease;
+}
+button:hover, select:hover { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.25); }
+button { cursor: pointer; }
+.primary { padding: 12px 18px; background: #f5f5f5; color: #080808; border-color: #fff; font-weight: 700; }
+.primary:hover { background: #fff; }
+.error { min-height: 22px; margin-top: 14px; color: #ff9c9c; font-size: 13px; }
+
+.controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+  width: 290px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 14px;
+  background: rgba(15,15,15,.82);
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  backdrop-filter: blur(18px) saturate(1.2);
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.controls-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.controls-header strong { display: block; font-size: 14px; }
+.controls-header span { display: block; margin-top: 3px; color: rgba(255,255,255,.48); font: 11px/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
+.icon-button { width: 30px; height: 30px; padding: 0; font-size: 20px; line-height: 1; }
+
+.controls > label { display: grid; gap: 7px; margin-top: 13px; }
+.controls label > span { display: flex; justify-content: space-between; color: rgba(255,255,255,.72); font-size: 12px; }
+output { color: rgba(255,255,255,.5); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
+select { width: 100%; min-width: 0; font-size: 12px; }
+input[type="range"] { width: 100%; accent-color: #f2f2f2; }
+
+.toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+.toggle { display: flex; align-items: center; gap: 8px; padding: 9px; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; background: rgba(255,255,255,.035); }
+.toggle span { font-size: 12px !important; color: rgba(255,255,255,.72) !important; }
+.button-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.button-row button { font-size: 12px; }
+.hint { margin-top: 12px; color: rgba(255,255,255,.35); font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; text-align: center; }
+
+.show-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+}
+
+body.controls-hidden .controls { opacity: 0; pointer-events: none; transform: translateY(-8px); }
+body.controls-hidden .show-button { opacity: .65; pointer-events: auto; transform: translateY(0); }
+body.clean .controls, body.clean .show-button { display: none; }
+
+@media (max-width: 640px) {
+  .controls { left: 12px; right: 12px; top: auto; bottom: 12px; width: auto; }
+}

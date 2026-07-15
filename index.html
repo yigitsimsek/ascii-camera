@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>ASCII Camera</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main id="stage">
+    <canvas id="output" width="1280" height="720" aria-label="ASCII camera output"></canvas>
+    <video id="camera" playsinline muted hidden></video>
+    <canvas id="sampler" hidden></canvas>
+
+    <section id="welcome" class="welcome">
+      <div class="welcome-card">
+        <div class="eyebrow">LOCAL CAMERA FILTER</div>
+        <h1>ASCII Camera</h1>
+        <p>Shape-aware six-sample glyph matching, inspired by Alex Harri’s renderer.</p>
+        <button id="startButton" class="primary">Start camera</button>
+        <div id="startError" class="error" role="alert"></div>
+      </div>
+    </section>
+
+    <aside id="controls" class="controls" aria-label="ASCII camera controls">
+      <div class="controls-header">
+        <div>
+          <strong>ASCII Camera</strong>
+          <span id="status">idle</span>
+        </div>
+        <button id="hideButton" class="icon-button" title="Hide controls (H)">×</button>
+      </div>
+
+      <label>
+        <span>Camera</span>
+        <select id="cameraSelect"></select>
+      </label>
+
+      <label>
+        <span>Columns <output id="columnsValue">240</output></span>
+        <input id="columns" type="range" min="48" max="240" step="2" value="240" />
+      </label>
+
+      <label>
+        <span>Shape contrast <output id="contrastValue">2.20</output></span>
+        <input id="contrast" type="range" min="1" max="4" step="0.05" value="2.2" />
+      </label>
+
+      <label>
+        <span>Directional contrast <output id="directionalValue">1.70</output></span>
+        <input id="directional" type="range" min="1" max="4" step="0.05" value="1.7" />
+      </label>
+
+      <label>
+        <span>Gamma <output id="gammaValue">0.90</output></span>
+        <input id="gamma" type="range" min="0.45" max="1.8" step="0.05" value="0.9" />
+      </label>
+
+      <div class="toggle-grid">
+        <label class="toggle"><input id="mirror" type="checkbox" checked /><span>Mirror</span></label>
+        <label class="toggle"><input id="invert" type="checkbox" /><span>Invert</span></label>
+      </div>
+
+      <div class="button-row">
+        <button id="fullscreenButton">Fullscreen</button>
+        <button id="resetButton">Reset</button>
+      </div>
+
+      <div class="hint">H controls · F fullscreen · M mirror · I invert</div>
+    </aside>
+
+    <button id="showButton" class="show-button" title="Show controls (H)">Controls</button>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
