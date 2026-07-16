@@ -3,13 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleDisplayName</key>
-    <string>ASCII Camera</string>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleExecutable</key>
-    <string>ASCII Camera</string>
+    <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
-    <string>com.yigit.asciicamera</string>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
@@ -17,14 +15,18 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.1</string>
+    <string>1.0</string>
     <key>CFBundleVersion</key>
-    <string>2</string>
+    <string>1</string>
     <key>LSMinimumSystemVersion</key>
-    <string>14.0</string>
+    <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
     <key>LSUIElement</key>
     <true/>
     <key>NSCameraUsageDescription</key>
-    <string>ASCII Camera transforms your camera feed into shape-aware ASCII video.</string>
+    <string>ASCII Camera needs the camera feed to render it as shape-aware ASCII.</string>
+    <key>NSSystemExtensionUsageDescription</key>
+    <string>ASCII Camera installs a virtual camera selectable in video calling apps.</string>
+    <key>AsciiCameraAppGroupIdentifier</key>
+    <string>$(TeamIdentifierPrefix)com.yigit.asciicamera</string>
 </dict>
 </plist>

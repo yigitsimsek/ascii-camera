@@ -1,41 +1,92 @@
-# ASCII Camera for macOS
+# ASCII Camera
 
-ASCII Camera captures the macOS camera, applies the original shape-aware ASCII renderer at **240 columns**, and publishes 1920×1080 video to calling apps. Daily use is one command:
+[![CI](https://github.com/yigitsimsek/ascii-camera/actions/workflows/ci.yml/badge.svg)](https://github.com/yigitsimsek/ascii-camera/actions/workflows/ci.yml)
+
+A headless macOS virtual camera that turns the physical camera feed into
+shape-aware ASCII art. Start it from a terminal, then select **OBS Virtual
+Camera** in Meet, Slack, Zoom, Photo Booth, or another camera client.
 
 ```bash
 asciicam
 ```
 
-There is no browser, OBS process, scene, screen capture, start screen, Dock icon, or manual routing step.
+The daily workflow has no browser page, OBS process, scene, screen capture,
+Dock icon, or manual routing step. The renderer defaults to 240 columns and can
+be reconfigured while capture is running.
 
-## Free architecture
+> [!IMPORTANT]
+> The free installation uses the signed Camera Extension bundled with OBS
+> Studio, but connects to its sink stream through an unofficial compatibility
+> bridge. OBS must remain installed, and an OBS update may require a bridge
+> update. This project is independent of and not affiliated with OBS Studio.
 
-The free workflow reuses OBS's properly signed modern CoreMediaIO Camera Extension without running OBS itself:
+## Why this project is different
 
-1. A headless Swift host captures the physical or Continuity Camera through AVFoundation and runs the 240-column ASCII renderer.
-2. The host writes BGRA sample buffers directly into the sink stream exposed by **OBS Virtual Camera**.
-3. OBS's signed Camera Extension publishes those frames to Meet, Slack, Zoom, Photo Booth, and other camera clients.
-4. A per-user LaunchAgent lets `asciicam` start and stop the headless host cleanly.
+Most ASCII filters map brightness directly to a character ramp. This renderer
+models each Menlo glyph as a six-dimensional shape vector, samples both the
+inside and neighborhood of every cell, applies directional contrast, and uses
+a quantized nearest-glyph cache. Edges and local structure influence glyph
+selection instead of brightness alone.
 
-OBS must remain installed because it owns and updates the signed extension, but it stays completely closed during normal use. No Apple Developer subscription is required for ASCII Camera.
+The browser prototype evolved into a native Swift and Objective-C pipeline
+using AVFoundation, Core Video, Core Text, CoreMediaIO, launchd, and macOS
+system video effects.
 
-The renderer remains the browser prototype's shape matcher, not a brightness ramp. It builds six-dimensional Menlo glyph vectors, samples six staggered internal regions and ten neighboring regions, applies directional and global contrast, and uses the same quantized 9⁶ nearest-glyph cache.
+## Architecture
 
-Keeping capture upstream of rendering preserves macOS Portrait, Center Stage, Studio Light, and Background Replacement. macOS stores these effects per capture application, so a background selected for Slack or Arc is not automatically selected for ASCII Camera. While ASCII Camera is running, use `asciicam effects` and enable **Background** once in Apple's Video Effects panel.
+```mermaid
+flowchart LR
+    C["Physical or Continuity Camera"] --> H["Headless AVFoundation host"]
+    H --> R["Shape-aware ASCII renderer"]
+    R --> B["CoreMediaIO OBS bridge"]
+    B --> E["Signed OBS Camera Extension"]
+    E --> A["Meet, Slack, Zoom, Photo Booth"]
+    CLI["asciicam"] --> H
+```
 
-Camera clients normally mirror their local self-view themselves. ASCII Camera therefore publishes camera-native orientation, avoiding the double flip that previously made the Meet or Slack preview appear unmirrored.
+See [Architecture](docs/ARCHITECTURE.md) for component boundaries, design
+decisions, trust assumptions, and the optional first-party extension path.
+
+## Features
+
+- Shape-aware ASCII matching with a 9^6 glyph lookup cache
+- 48–240 columns, adjustable without restarting the camera
+- 1920x1080 BGRA virtual-camera output
+- Headless per-user LaunchAgent controlled by one CLI
+- FaceTime, external, and Continuity Camera discovery
+- macOS Portrait, Center Stage, Studio Light, and Background Replacement
+- Camera-native output orientation so calling apps mirror self-view once
+- No paid Apple Developer membership for the default workflow
+- Reproducible core tests, strict bridge compilation, and release benchmarks
+
+## Requirements and compatibility
+
+| Component | Requirement |
+| --- | --- |
+| macOS | 14 or later; Background Replacement requires macOS 15 or later |
+| Hardware | Apple silicon tested; Intel is not currently tested |
+| OBS Studio | Must be installed in `/Applications`; 32.1.2 is the tested version |
+| Build tools | Apple Command Line Tools with Swift 6 |
+| Calling app | Any app that accepts a CoreMediaIO camera device |
+
+The current development machine is a 16 GB M1 Pro MacBook Pro running macOS
+26.5.2. Compatibility outside the tested versions is best effort because the
+OBS sink is not a supported public integration surface.
 
 ## Install
 
-Install the current OBS release in `/Applications`, then run:
+1. Install OBS Studio in `/Applications` from its official distribution.
+2. Clone this repository and run:
 
-```bash
-scripts/install.sh
-```
+   ```bash
+   scripts/install.sh
+   ```
 
-The script first verifies the OBS application and its embedded Camera Extension using Apple's code-signing tools. It then tests the renderer and transport, builds an ad-hoc-signed headless app, installs its LaunchAgent, and installs `/usr/local/bin/asciicam`.
+The installer verifies the OBS signature, runs the test suite, builds and
+ad-hoc signs the headless host, installs `/Applications/ASCII Camera.app`,
+registers a per-user LaunchAgent, and installs `/usr/local/bin/asciicam`.
 
-### One-time extension activation
+### One-time Camera Extension activation
 
 If `asciicam status` reports `modern driver: not activated`, run:
 
@@ -43,31 +94,26 @@ If `asciicam status` reports `modern driver: not activated`, run:
 open -a OBS --args --startvirtualcam
 ```
 
-When `asciicam status` reports `modern driver: approval pending`, open **System Settings → General → Login Items & Extensions**, scroll to **Camera Extensions**, click its info button, and enable **OBS Virtual Camera**. Restart OBS and click **Start Virtual Camera** once. When it starts successfully, quit OBS completely. This activation is only required once. The Camera Extensions row may not exist until macOS has accepted a valid extension activation request.
+When the status changes to `approval pending`, open **System Settings → General
+→ Login Items & Extensions → Camera Extensions** and enable **OBS Virtual
+Camera**. Restart OBS and start its virtual camera once. After it succeeds, quit
+OBS completely; daily use does not run it.
 
-If no prompt or Extensions section appears, verify the installed application:
-
-```bash
-codesign --verify --deep --strict --verbose=2 /Applications/OBS.app
-```
-
-Any validation error means macOS will refuse to register the bundled camera extension. Reinstall OBS from its official DMG, choosing **Replace** when copying it into `/Applications`, and rerun `scripts/install.sh`.
-
-Now run:
+Now start ASCII Camera:
 
 ```bash
 asciicam
 ```
 
-On first start, allow **ASCII Camera** to access the camera. Fully restart any calling app that was open during activation, then select **OBS Virtual Camera**.
-
-If `asciicam status` launches the old browser on port 4173, remove the stale `alias asciicam=.../start.command` line from `~/.zshrc`, open a new terminal, and try again. Shell aliases take precedence over `/usr/local/bin/asciicam`.
+On first launch, allow **ASCII Camera** to access the physical camera. Fully
+quit and reopen calling apps that were running during extension activation so
+they refresh their camera lists.
 
 ## Commands
 
 ```text
 asciicam          start the headless camera host
-asciicam status   show host and Camera Extension state
+asciicam status   show host, extension, and column state
 asciicam columns  show the current column count
 asciicam columns N
                   change columns live (48–240; default 240)
@@ -76,23 +122,79 @@ asciicam stop     release the physical camera
 asciicam logs     stream native diagnostics
 ```
 
-## Tests
+macOS stores video effects per capture application. Run `asciicam effects`
+while the host is active to choose a Background specifically for ASCII Camera.
+
+## Performance
+
+Steady-state release measurements on the tested M1 Pro, rendering a 1280x720
+source into a 1920x1080 output buffer:
+
+| Columns | Rows | Median render time |
+| ---: | ---: | ---: |
+| 48 | 16 | 2.9 ms |
+| 96 | 31 | 5.9 ms |
+| 120 | 39 | 7.9 ms |
+| 180 | 59 | 15.7 ms |
+| 240 | 78 | 20.6 ms |
+
+These are renderer-only medians over three measured frames after one warmup;
+they are not end-to-end latency claims. Reproduce them locally with:
+
+```bash
+scripts/benchmark.sh
+```
+
+## Development
+
+Run the renderer tests, release host build, and strict Objective-C bridge check:
 
 ```bash
 scripts/test.sh
 ```
 
-The suite renders real Core Video frames, verifies the 240-column renderer, builds the release host, and tests its IOSurface transport primitives.
+The repository is organized by runtime responsibility:
 
-## Independent modern extension
+```text
+Sources/AsciiCameraCore/             renderer and shared frame primitives
+Native/Host/                         active headless macOS host
+Native/OBSBridge/                    isolated OBS Camera Extension bridge
+Tests/                               renderer and frame-store tests
+Benchmarks/                          release renderer benchmark
+Experimental/FirstPartyCameraExtension/
+                                     paid-team first-party extension path
+Prototype/Browser/                   original HTML/JavaScript prototype
+```
 
-`scripts/install-modern.sh PAID_TEAM_ID` builds the project's own Camera Extension from `AsciiCamera.xcodeproj`. That removes the OBS installation dependency, but Apple does not allow a free Personal Team to provision the System Extension capability.
+## First-party Camera Extension experiment
+
+The Xcode project under `Experimental/FirstPartyCameraExtension` implements the
+supported long-term architecture: ASCII Camera owns its Camera Extension and
+does not depend on OBS. Apple does not provision the required System Extension
+capability for free Personal Teams. With a paid Apple Developer team and full
+Xcode installed, build it with:
+
+```bash
+scripts/install-first-party-extension.sh PAID_APPLE_DEVELOPER_TEAM_ID
+```
 
 ## Browser prototype
 
-The original HTML/JS implementation remains for reference:
+The original implementation is preserved for comparison:
 
 ```bash
+cd Prototype/Browser
 npm install
 npm start
 ```
+
+## Troubleshooting and uninstall
+
+See [Troubleshooting](docs/TROUBLESHOOTING.md) for extension approval, camera
+permissions, stale shell aliases, video effects, and performance. Remove the
+local installation without touching OBS by running `scripts/uninstall.sh`.
+
+## License
+
+[MIT](LICENSE). OBS Studio is a separate dependency distributed under its own
+license.

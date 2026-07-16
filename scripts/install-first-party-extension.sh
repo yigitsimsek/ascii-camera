@@ -13,7 +13,7 @@ if [[ ! -d /Applications/Xcode.app ]]; then
 fi
 
 if [[ -z "$TEAM_ID" ]]; then
-  echo "Usage: scripts/install-modern.sh PAID_APPLE_DEVELOPER_TEAM_ID"
+  echo "Usage: scripts/install-first-party-extension.sh PAID_APPLE_DEVELOPER_TEAM_ID"
   echo "Apple Personal Teams cannot provision a System Extension."
   exit 2
 fi
@@ -22,7 +22,7 @@ fi
 
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
 xcodebuild \
-  -project "$ROOT/AsciiCamera.xcodeproj" \
+  -project "$ROOT/Experimental/FirstPartyCameraExtension/FirstPartyCameraExtension.xcodeproj" \
   -scheme "ASCII Camera" \
   -configuration Release \
   -derivedDataPath "$DERIVED_DATA" \
@@ -39,4 +39,4 @@ sudo ditto "$BUILT_APP" "/Applications/ASCII Camera.app"
 sudo mkdir -p /usr/local/bin
 sudo install -m 755 "$ROOT/bin/asciicam" /usr/local/bin/asciicam
 
-echo "Installed the modern Camera Extension build."
+echo "Installed the experimental first-party Camera Extension build."

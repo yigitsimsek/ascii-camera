@@ -9,6 +9,11 @@ BUILD_APP="$ROOT/.build/ASCII Camera.app"
 LAUNCH_AGENT="$HOME/Library/LaunchAgents/com.yigit.asciicamera.plist"
 LAUNCH_JOB="gui/$(id -u)/com.yigit.asciicamera"
 
+if ! xcrun --find swift >/dev/null 2>&1; then
+  echo "Apple Command Line Tools are required. Install them with: xcode-select --install"
+  exit 1
+fi
+
 obs_extension_state() {
   local line
   line="$(systemextensionsctl list 2>/dev/null | grep -F "$OBS_EXTENSION_ID" || true)"
@@ -44,7 +49,7 @@ fi
 rm -rf "$BUILD_APP"
 mkdir -p "$BUILD_APP/Contents/MacOS"
 install -m 755 "$ROOT/.build/release/ascii-camera-host" "$BUILD_APP/Contents/MacOS/ASCII Camera"
-install -m 644 "$ROOT/Native/LegacyHost/Info.plist" "$BUILD_APP/Contents/Info.plist"
+install -m 644 "$ROOT/Native/Host/Info.plist" "$BUILD_APP/Contents/Info.plist"
 codesign --force --deep --sign - --identifier com.yigit.asciicamera "$BUILD_APP"
 
 sudo rm -rf "/Applications/ASCII Camera.app"
@@ -53,7 +58,7 @@ sudo mkdir -p /usr/local/bin
 sudo install -m 755 "$ROOT/bin/asciicam" /usr/local/bin/asciicam
 mkdir -p "$HOME/Library/LaunchAgents"
 launchctl bootout "$LAUNCH_JOB" >/dev/null 2>&1 || true
-install -m 644 "$ROOT/Native/LegacyHost/com.yigit.asciicamera.plist" "$LAUNCH_AGENT"
+install -m 644 "$ROOT/Native/Host/com.yigit.asciicamera.plist" "$LAUNCH_AGENT"
 if ! launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT"; then
   echo "Could not load the ASCII Camera agent. Rerun this installer from your logged-in desktop session."
   exit 1

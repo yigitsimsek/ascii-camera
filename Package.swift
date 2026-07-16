@@ -8,25 +8,25 @@ let package = Package(
         .library(name: "AsciiCameraCore", targets: ["AsciiCameraCore"]),
         .executable(name: "ascii-camera-host", targets: ["AsciiCameraHost"]),
         .executable(name: "ascii-camera-core-tests", targets: ["AsciiCameraCoreTests"]),
+        .executable(name: "ascii-camera-benchmarks", targets: ["AsciiCameraBenchmarks"]),
     ],
     targets: [
         .target(name: "AsciiCameraCore"),
         .target(
-            name: "AsciiCameraLegacyTransport",
-            path: "Native/LegacyTransport",
+            name: "AsciiCameraOBSBridge",
+            path: "Native/OBSBridge",
             publicHeadersPath: "include",
             linkerSettings: [
                 .linkedFramework("Foundation"),
                 .linkedFramework("CoreMedia"),
                 .linkedFramework("CoreMediaIO"),
                 .linkedFramework("CoreVideo"),
-                .linkedFramework("IOSurface"),
             ]
         ),
         .executableTarget(
             name: "AsciiCameraHost",
-            dependencies: ["AsciiCameraCore", "AsciiCameraLegacyTransport"],
-            path: "Native/LegacyHost",
+            dependencies: ["AsciiCameraCore", "AsciiCameraOBSBridge"],
+            path: "Native/Host",
             exclude: ["Info.plist", "com.yigit.asciicamera.plist"],
             linkerSettings: [
                 .linkedFramework("AppKit"),
@@ -39,6 +39,11 @@ let package = Package(
             name: "AsciiCameraCoreTests",
             dependencies: ["AsciiCameraCore"],
             path: "Tests/AsciiCameraCoreTests"
+        ),
+        .executableTarget(
+            name: "AsciiCameraBenchmarks",
+            dependencies: ["AsciiCameraCore"],
+            path: "Benchmarks/AsciiCameraBenchmarks"
         ),
     ]
 )
