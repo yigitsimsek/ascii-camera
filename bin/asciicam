@@ -7,16 +7,35 @@ JOB="gui/$(id -u)/$BUNDLE_ID"
 OBS_EXTENSION_ID="com.obsproject.obs-studio.mac-camera-extension"
 COMMAND="${1:-start}"
 
+obs_extension_state() {
+  local line
+  line="$(systemextensionsctl list 2>/dev/null | grep -F "$OBS_EXTENSION_ID" || true)"
+  if [[ "$line" == *"[activated enabled]"* ]]; then
+    echo "activated"
+  elif [[ "$line" == *"waiting for user"* ]]; then
+    echo "approval pending"
+  elif [[ -n "$line" ]]; then
+    echo "registered but unavailable"
+  else
+    echo "not activated"
+  fi
+}
+
 case "$COMMAND" in
   start)
     if [[ ! -d "$APP" ]]; then
       echo "ASCII Camera is not installed. Run scripts/install.sh from the repository first."
       exit 1
     fi
-    if ! systemextensionsctl list 2>/dev/null | grep -q "$OBS_EXTENSION_ID"; then
-      echo "OBS Camera Extension is not activated yet."
-      echo "Run: open -a OBS --args --startvirtualcam"
-      echo "On macOS 26 enable System Settings > Privacy & Security > Extensions > OBS > Media Extension."
+    EXTENSION_STATE="$(obs_extension_state)"
+    if [[ "$EXTENSION_STATE" != "activated" ]]; then
+      echo "OBS Camera Extension: $EXTENSION_STATE."
+      if [[ "$EXTENSION_STATE" == "approval pending" ]]; then
+        echo "Approve OBS Virtual Camera under System Settings > General > Login Items & Extensions > Camera Extensions."
+      else
+        echo "Run: open -a OBS --args --startvirtualcam"
+        echo "Approve the Camera Extension if macOS prompts you."
+      fi
       echo "Restart OBS and start its virtual camera once; then quit OBS and run asciicam again."
       exit 1
     fi
@@ -32,11 +51,7 @@ case "$COMMAND" in
     fi
     for _ in {1..30}; do
       if pgrep -x "ASCII Camera" >/dev/null 2>&1; then
-        if systemextensionsctl list 2>/dev/null | grep -q "$OBS_EXTENSION_ID"; then
-          echo "ASCII Camera is running at 240 columns. Select ‘OBS Virtual Camera’ in your calling app."
-        else
-          echo "ASCII Camera is running at 240 columns. Select ‘ASCII Camera’ in your calling app."
-        fi
+        echo "ASCII Camera is running at 240 columns. Select ‘OBS Virtual Camera’ in your calling app."
         exit 0
       fi
       sleep 0.1
@@ -60,11 +75,7 @@ case "$COMMAND" in
     else
       echo "host: stopped"
     fi
-    if systemextensionsctl list 2>/dev/null | grep -q "$OBS_EXTENSION_ID"; then
-      echo "modern driver: activated"
-    else
-      echo "modern driver: not activated"
-    fi
+    echo "modern driver: $(obs_extension_state)"
     if systemextensionsctl list 2>/dev/null | grep -q "com.yigit.asciicamera.extension"; then
       systemextensionsctl list 2>/dev/null | grep "com.yigit.asciicamera.extension"
     fi

@@ -31,7 +31,7 @@ Install the current OBS release in `/Applications`, then run:
 scripts/install.sh
 ```
 
-The script tests the renderer and transport, builds an ad-hoc-signed headless app, installs its LaunchAgent, and installs `/usr/local/bin/asciicam`.
+The script first verifies the OBS application and its embedded Camera Extension using Apple's code-signing tools. It then tests the renderer and transport, builds an ad-hoc-signed headless app, installs its LaunchAgent, and installs `/usr/local/bin/asciicam`.
 
 ### One-time extension activation
 
@@ -41,7 +41,15 @@ If `asciicam status` reports `modern driver: not activated`, run:
 open -a OBS --args --startvirtualcam
 ```
 
-On macOS 26 Tahoe, open **System Settings → Privacy & Security → Extensions → OBS** and enable **Media Extension**. On macOS 15, use **General → Login Items & Extensions → Camera Extensions** instead. Restart OBS and click **Start Virtual Camera** once. When it starts successfully, quit OBS completely. This activation is only required once.
+When `asciicam status` reports `modern driver: approval pending`, open **System Settings → General → Login Items & Extensions**, scroll to **Camera Extensions**, click its info button, and enable **OBS Virtual Camera**. Restart OBS and click **Start Virtual Camera** once. When it starts successfully, quit OBS completely. This activation is only required once. The Camera Extensions row may not exist until macOS has accepted a valid extension activation request.
+
+If no prompt or Extensions section appears, verify the installed application:
+
+```bash
+codesign --verify --deep --strict --verbose=2 /Applications/OBS.app
+```
+
+Any validation error means macOS will refuse to register the bundled camera extension. Reinstall OBS from its official DMG, choosing **Replace** when copying it into `/Applications`, and rerun `scripts/install.sh`.
 
 Now run:
 
