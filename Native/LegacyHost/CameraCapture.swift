@@ -23,7 +23,7 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
     private let session = AVCaptureSession()
     private let output = AVCaptureVideoDataOutput()
     private let queue = DispatchQueue(label: "com.yigit.asciicamera.capture", qos: .userInteractive)
-    private let renderer = AsciiRenderer(settings: RenderSettings(columns: 240), outputWidth: 1920, outputHeight: 1080)
+    private let renderer: AsciiRenderer
     private let modernSink: OBSModernCameraSink
     private var lastRenderedTime = CMTime.invalid
     private var transportFrames: [CVPixelBuffer] = []
@@ -31,6 +31,11 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
 
     init(modernSink: OBSModernCameraSink) {
         self.modernSink = modernSink
+        renderer = AsciiRenderer(
+            settings: RenderSettings(columns: Self.storedColumns(), mirrored: false),
+            outputWidth: 1920,
+            outputHeight: 1080
+        )
         super.init()
     }
 
@@ -52,6 +57,9 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
             session.addOutput(output)
 
             if let connection = output.connection(with: .video), connection.isVideoMirroringSupported {
+                // Camera clients such as Meet, Slack, Zoom, and Photo Booth mirror
+                // their local self-view. Publish camera-native orientation so the
+                // client applies exactly one mirror instead of undoing ours.
                 connection.isVideoMirrored = false
             }
             session.commitConfiguration()
@@ -62,11 +70,27 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
 
         queue.async { [weak self] in self?.session.startRunning() }
         logger.notice("Capturing from \(camera.localizedName, privacy: .public)")
+        logger.notice("Renderer configured for \(self.renderer.settings.columns) columns in camera-native orientation")
+        if #available(macOS 15.0, *) {
+            logger.notice("Background Replacement for ASCII Camera: \(AVCaptureDevice.isBackgroundReplacementEnabled ? "enabled" : "disabled", privacy: .public)")
+        }
     }
 
     func stop() {
         output.setSampleBufferDelegate(nil, queue: nil)
         if session.isRunning { session.stopRunning() }
+    }
+
+    func setColumns(_ columns: Int) {
+        queue.async { [weak self] in
+            guard let self else { return }
+            var settings = self.renderer.settings
+            settings.columns = max(48, min(240, columns))
+            settings.mirrored = false
+            guard settings != self.renderer.settings else { return }
+            self.renderer.settings = settings
+            self.logger.notice("Live renderer update: \(settings.columns) columns")
+        }
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
@@ -138,5 +162,10 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         return discovery.devices.first { device in
             device.localizedName != "ASCII Camera" && device.localizedName != "OBS Virtual Camera"
         }
+    }
+
+    static func storedColumns() -> Int {
+        let value = (UserDefaults.standard.object(forKey: "columns") as? NSNumber)?.intValue ?? 240
+        return max(48, min(240, value))
     }
 }

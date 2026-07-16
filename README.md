@@ -21,7 +21,9 @@ OBS must remain installed because it owns and updates the signed extension, but 
 
 The renderer remains the browser prototype's shape matcher, not a brightness ramp. It builds six-dimensional Menlo glyph vectors, samples six staggered internal regions and ten neighboring regions, applies directional and global contrast, and uses the same quantized 9⁶ nearest-glyph cache.
 
-Keeping capture upstream of rendering preserves macOS Portrait, Center Stage, Studio Light, and virtual backgrounds whenever macOS supplies the effected AVFoundation feed to the host. Effect availability remains controlled by macOS.
+Keeping capture upstream of rendering preserves macOS Portrait, Center Stage, Studio Light, and Background Replacement. macOS stores these effects per capture application, so a background selected for Slack or Arc is not automatically selected for ASCII Camera. While ASCII Camera is running, use `asciicam effects` and enable **Background** once in Apple's Video Effects panel.
+
+Camera clients normally mirror their local self-view themselves. ASCII Camera therefore publishes camera-native orientation, avoiding the double flip that previously made the Meet or Slack preview appear unmirrored.
 
 ## Install
 
@@ -66,6 +68,10 @@ If `asciicam status` launches the old browser on port 4173, remove the stale `al
 ```text
 asciicam          start the headless camera host
 asciicam status   show host and Camera Extension state
+asciicam columns  show the current column count
+asciicam columns N
+                  change columns live (48–240; default 240)
+asciicam effects  open Apple's Video Effects panel for ASCII Camera
 asciicam stop     release the physical camera
 asciicam logs     stream native diagnostics
 ```

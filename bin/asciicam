@@ -5,7 +5,18 @@ APP="/Applications/ASCII Camera.app"
 BUNDLE_ID="com.yigit.asciicamera"
 JOB="gui/$(id -u)/$BUNDLE_ID"
 OBS_EXTENSION_ID="com.obsproject.obs-studio.mac-camera-extension"
+SETTINGS_DOMAIN="com.yigit.asciicamera"
 COMMAND="${1:-start}"
+
+current_columns() {
+  local value
+  value="$(defaults read "$SETTINGS_DOMAIN" columns 2>/dev/null || true)"
+  if [[ "$value" == <-> ]] && (( value >= 48 && value <= 240 )); then
+    echo "$value"
+  else
+    echo "240"
+  fi
+}
 
 obs_extension_state() {
   local line
@@ -51,7 +62,7 @@ case "$COMMAND" in
     fi
     for _ in {1..30}; do
       if pgrep -x "ASCII Camera" >/dev/null 2>&1; then
-        echo "ASCII Camera is running at 240 columns. Select ‘OBS Virtual Camera’ in your calling app."
+        echo "ASCII Camera is running at $(current_columns) columns. Select ‘OBS Virtual Camera’ in your calling app."
         exit 0
       fi
       sleep 0.1
@@ -76,15 +87,40 @@ case "$COMMAND" in
       echo "host: stopped"
     fi
     echo "modern driver: $(obs_extension_state)"
+    echo "columns: $(current_columns)"
     if systemextensionsctl list 2>/dev/null | grep -q "com.yigit.asciicamera.extension"; then
       systemextensionsctl list 2>/dev/null | grep "com.yigit.asciicamera.extension"
     fi
+    ;;
+  columns)
+    VALUE="${2:-}"
+    if [[ -z "$VALUE" ]]; then
+      echo "columns: $(current_columns)"
+      exit 0
+    fi
+    if [[ "$VALUE" != <-> ]] || (( VALUE < 48 || VALUE > 240 )); then
+      echo "Column count must be an integer from 48 to 240."
+      exit 2
+    fi
+    defaults write "$SETTINGS_DOMAIN" columns -int "$VALUE"
+    if pgrep -x "ASCII Camera" >/dev/null 2>&1; then
+      echo "Columns changed to $VALUE live."
+    else
+      echo "Columns set to $VALUE for the next start."
+    fi
+    ;;
+  effects)
+    if ! pgrep -x "ASCII Camera" >/dev/null 2>&1; then
+      "$0" start
+    fi
+    defaults write "$SETTINGS_DOMAIN" effectsRequest -string "$(/usr/bin/uuidgen)"
+    echo "Opened macOS Video Effects for ASCII Camera. Enable Background there."
     ;;
   logs)
     exec log stream --style compact --level info --predicate 'subsystem BEGINSWITH "com.yigit.asciicamera"'
     ;;
   *)
-    echo "Usage: asciicam [start|stop|status|logs]"
+    echo "Usage: asciicam [start|stop|status|columns [48-240]|effects|logs]"
     exit 2
     ;;
 esac

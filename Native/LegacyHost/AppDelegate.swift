@@ -8,8 +8,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
     private let logger = Logger(subsystem: "com.yigit.asciicamera", category: "host")
     private let modernSink = OBSModernCameraSink()
     private var capture: CameraCapture?
+    private var commandTimer: Timer?
+    private var lastColumns = 240
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        installCommandPolling()
         do {
             try modernSink.start()
             logger.notice("Publishing through the modern OBS Camera Extension")
@@ -54,9 +57,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
             let capture = CameraCapture(modernSink: modernSink)
             try capture.start()
             self.capture = capture
-            logger.notice("ASCII Camera is running at 240 columns through the modern OBS Camera Extension")
+            logger.notice("ASCII Camera is running through the modern OBS Camera Extension")
         } catch {
             logger.fault("Could not start ASCII Camera: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private func installCommandPolling() {
+        UserDefaults.standard.synchronize()
+        lastColumns = CameraCapture.storedColumns()
+        commandTimer = Timer.scheduledTimer(
+            timeInterval: 0.25,
+            target: self,
+            selector: #selector(pollCommands),
+            userInfo: nil,
+            repeats: true
+        )
+    }
+
+    @objc private func pollCommands() {
+        UserDefaults.standard.synchronize()
+
+        let columns = CameraCapture.storedColumns()
+        if columns != lastColumns {
+            lastColumns = columns
+            capture?.setColumns(columns)
+        }
+
+        let request = UserDefaults.standard.string(forKey: "effectsRequest") ?? ""
+        let handled = UserDefaults.standard.string(forKey: "effectsRequestHandled") ?? ""
+        if !request.isEmpty, request != handled {
+            UserDefaults.standard.set(request, forKey: "effectsRequestHandled")
+            logger.notice("Opening macOS Video Effects for ASCII Camera")
+            AVCaptureDevice.showSystemUserInterface(.videoEffects)
         }
     }
 }
