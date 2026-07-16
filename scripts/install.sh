@@ -44,9 +44,10 @@ else
   echo
   echo "ONE-TIME ACTIVATION REQUIRED:"
   echo "  1. Run: open -a OBS --args --startvirtualcam"
-  echo "  2. Approve OBS Virtual Camera in System Settings if macOS asks."
-  echo "  3. Once OBS Virtual Camera starts, quit OBS completely."
-  echo "  4. Run: asciicam"
+  echo "  2. On macOS 26: System Settings > Privacy & Security > Extensions > OBS."
+  echo "     Enable Media Extension. (macOS 15 uses General > Login Items & Extensions > Camera Extensions.)"
+  echo "  3. Restart OBS and click Start Virtual Camera once."
+  echo "  4. Once it starts, quit OBS completely, then run: asciicam"
 fi
 echo "Daily use does not run the OBS application. Keep it installed because it owns the signed Camera Extension."
 

@@ -16,7 +16,8 @@ case "$COMMAND" in
     if ! systemextensionsctl list 2>/dev/null | grep -q "$OBS_EXTENSION_ID"; then
       echo "OBS Camera Extension is not activated yet."
       echo "Run: open -a OBS --args --startvirtualcam"
-      echo "Approve it if prompted, quit OBS, then run asciicam again."
+      echo "On macOS 26 enable System Settings > Privacy & Security > Extensions > OBS > Media Extension."
+      echo "Restart OBS and start its virtual camera once; then quit OBS and run asciicam again."
       exit 1
     fi
     if pgrep -x "ASCII Camera" >/dev/null 2>&1; then

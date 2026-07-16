@@ -41,7 +41,7 @@ If `asciicam status` reports `modern driver: not activated`, run:
 open -a OBS --args --startvirtualcam
 ```
 
-Approve **OBS Virtual Camera** in System Settings if macOS asks. Once the virtual camera starts, quit OBS completely. This activation is only required once.
+On macOS 26 Tahoe, open **System Settings → Privacy & Security → Extensions → OBS** and enable **Media Extension**. On macOS 15, use **General → Login Items & Extensions → Camera Extensions** instead. Restart OBS and click **Start Virtual Camera** once. When it starts successfully, quit OBS completely. This activation is only required once.
 
 Now run:
 
