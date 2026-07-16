@@ -1,6 +1,6 @@
 # ASCII Camera for macOS
 
-ASCII Camera reads the macOS camera, applies the original shape-aware ASCII renderer at **240 columns**, and publishes 1280×720 video to calling apps. The normal workflow is one command:
+ASCII Camera captures the macOS camera, applies the original shape-aware ASCII renderer at **240 columns**, and publishes 1920×1080 video to calling apps. Daily use is one command:
 
 ```bash
 asciicam
@@ -10,53 +10,54 @@ There is no browser, OBS process, scene, screen capture, start screen, Dock icon
 
 ## Free architecture
 
-The default installer does not need an Apple Developer account. It installs three small pieces:
+The free workflow reuses OBS's properly signed modern CoreMediaIO Camera Extension without running OBS itself:
 
-1. A headless Swift host captures the physical or Continuity Camera with AVFoundation and runs the ASCII renderer.
-2. A per-user LaunchAgent gives the host a launchd-managed Mach service and lets `asciicam` start and stop it cleanly.
-3. OBS's standalone 552 KB legacy CoreMediaIO plug-in receives IOSurface frames from that service. OBS itself never starts and can be uninstalled after the plug-in is copied.
+1. A headless Swift host captures the physical or Continuity Camera through AVFoundation and runs the 240-column ASCII renderer.
+2. The host writes BGRA sample buffers directly into the sink stream exposed by **OBS Virtual Camera**.
+3. OBS's signed Camera Extension publishes those frames to Meet, Slack, Zoom, Photo Booth, and other camera clients.
+4. A per-user LaunchAgent lets `asciicam` start and stop the headless host cleanly.
 
-This uses the plug-in's public, open-source transport protocol. The camera is listed as **OBS Virtual Camera** because the unmodified, Developer ID-signed plug-in supplies its device identity. The video comes entirely from ASCII Camera.
+OBS must remain installed because it owns and updates the signed extension, but it stays completely closed during normal use. No Apple Developer subscription is required for ASCII Camera.
 
 The renderer remains the browser prototype's shape matcher, not a brightness ramp. It builds six-dimensional Menlo glyph vectors, samples six staggered internal regions and ten neighboring regions, applies directional and global contrast, and uses the same quantized 9⁶ nearest-glyph cache.
 
-Keeping capture upstream of rendering means macOS Portrait, Center Stage, Studio Light, and virtual backgrounds are preserved whenever macOS supplies an effected AVFoundation feed to the host. Effect availability is still controlled by macOS.
+Keeping capture upstream of rendering preserves macOS Portrait, Center Stage, Studio Light, and virtual backgrounds whenever macOS supplies the effected AVFoundation feed to the host. Effect availability remains controlled by macOS.
 
-## Free-driver compatibility
+## Install
 
-Apple deprecated legacy DAL camera plug-ins in favor of Camera Extensions. A legacy plug-in cannot load in Apple apps or third-party apps that enforce library validation.
-
-- Expected to work on this Mac: **Arc** (including Google Meet), **Zoom**, **Microsoft Teams**, and **Discord**.
-- Needs an end-to-end check: **Slack**; its helper-process signing varies.
-- Does not work: **Chrome**, **Safari**, **FaceTime**, and other Apple apps. Use Arc for Meet.
-
-Do not disable SIP or weaken system security to change this. Universal compatibility requires Apple's paid System Extension provisioning; that implementation remains in `Native/Extension` and can be built separately.
-
-## Free install
-
-OBS is already installed on the development Mac, so its plug-in can be copied once. Quit OBS, then run:
+Install the current OBS release in `/Applications`, then run:
 
 ```bash
 scripts/install.sh
 ```
 
-The script tests the renderer, builds an ad-hoc-signed headless app, copies the standalone plug-in to `/Library/CoreMediaIO/Plug-Ins/DAL`, installs the user LaunchAgent, and installs `/usr/local/bin/asciicam`. Afterward, OBS can be uninstalled; keep the copied DAL plug-in.
+The script tests the renderer and transport, builds an ad-hoc-signed headless app, installs its LaunchAgent, and installs `/usr/local/bin/asciicam`.
 
-Quit and reopen the calling app once so it refreshes its camera list. Then:
+### One-time extension activation
+
+If `asciicam status` reports `modern driver: not activated`, run:
+
+```bash
+open -a OBS --args --startvirtualcam
+```
+
+Approve **OBS Virtual Camera** in System Settings if macOS asks. Once the virtual camera starts, quit OBS completely. This activation is only required once.
+
+Now run:
 
 ```bash
 asciicam
 ```
 
-On first start, allow **ASCII Camera** to use the camera. Select **OBS Virtual Camera** in Arc, Zoom, Teams, or another compatible app.
+On first start, allow **ASCII Camera** to access the camera. Fully restart any calling app that was open during activation, then select **OBS Virtual Camera**.
 
-If `asciicam status` launches the old browser on port 4173, remove the stale `alias asciicam=.../start.command` line from `~/.zshrc`, open a new terminal, and try again. Shell aliases take precedence over the installed `/usr/local/bin/asciicam` command.
+If `asciicam status` launches the old browser on port 4173, remove the stale `alias asciicam=.../start.command` line from `~/.zshrc`, open a new terminal, and try again. Shell aliases take precedence over `/usr/local/bin/asciicam`.
 
 ## Commands
 
 ```text
 asciicam          start the headless camera host
-asciicam status   show host and driver state
+asciicam status   show host and Camera Extension state
 asciicam stop     release the physical camera
 asciicam logs     stream native diagnostics
 ```
@@ -67,11 +68,11 @@ asciicam logs     stream native diagnostics
 scripts/test.sh
 ```
 
-The suite renders real Core Video frames, verifies 240-column output and shared-frame behavior, builds the release host, and runs an IOSurface/Mach transport test when its shell is permitted to load a temporary LaunchAgent.
+The suite renders real Core Video frames, verifies the 240-column renderer, builds the release host, and tests its IOSurface transport primitives.
 
-## Paid modern option
+## Independent modern extension
 
-`scripts/install-modern.sh PAID_TEAM_ID` builds the CoreMediaIO Camera Extension in `AsciiCamera.xcodeproj`. That route works in Chrome, Safari, FaceTime, and other library-validated apps, but Apple does not allow a free Personal Team to provision its System Extension capability.
+`scripts/install-modern.sh PAID_TEAM_ID` builds the project's own Camera Extension from `AsciiCamera.xcodeproj`. That removes the OBS installation dependency, but Apple does not allow a free Personal Team to provision the System Extension capability.
 
 ## Browser prototype
 

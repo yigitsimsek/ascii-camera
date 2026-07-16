@@ -23,14 +23,14 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
     private let session = AVCaptureSession()
     private let output = AVCaptureVideoDataOutput()
     private let queue = DispatchQueue(label: "com.yigit.asciicamera.capture", qos: .userInteractive)
-    private let renderer = AsciiRenderer(settings: RenderSettings(columns: 240))
-    private let transport: LegacyVirtualCameraServer
+    private let renderer = AsciiRenderer(settings: RenderSettings(columns: 240), outputWidth: 1920, outputHeight: 1080)
+    private let modernSink: OBSModernCameraSink
     private var lastRenderedTime = CMTime.invalid
     private var transportFrames: [CVPixelBuffer] = []
     private var transportFrameIndex = 0
 
-    init(transport: LegacyVirtualCameraServer) {
-        self.transport = transport
+    init(modernSink: OBSModernCameraSink) {
+        self.modernSink = modernSink
         super.init()
     }
 
@@ -77,12 +77,8 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         guard let source = CMSampleBufferGetImageBuffer(sampleBuffer),
               let rendered = renderer.render(source),
               let sharedFrame = copyToTransportSurface(rendered) else { return }
-        transport.send(
-            sharedFrame,
-            timestamp: DispatchTime.now().uptimeNanoseconds,
-            fpsNumerator: 30,
-            fpsDenominator: 1
-        )
+        let now = DispatchTime.now().uptimeNanoseconds
+        modernSink.send(sharedFrame, timestamp: now)
     }
 
     private func copyToTransportSurface(_ source: CVPixelBuffer) -> CVPixelBuffer? {

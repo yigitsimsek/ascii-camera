@@ -17,6 +17,8 @@ let package = Package(
             publicHeadersPath: "include",
             linkerSettings: [
                 .linkedFramework("Foundation"),
+                .linkedFramework("CoreMedia"),
+                .linkedFramework("CoreMediaIO"),
                 .linkedFramework("CoreVideo"),
                 .linkedFramework("IOSurface"),
             ]

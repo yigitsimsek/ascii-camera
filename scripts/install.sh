@@ -2,17 +2,16 @@
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OBS_PLUGIN="/Applications/OBS.app/Contents/Resources/obs-mac-virtualcam.plugin"
-DAL_DIR="/Library/CoreMediaIO/Plug-Ins/DAL"
-DAL_PLUGIN="$DAL_DIR/obs-mac-virtualcam.plugin"
+OBS_APP="/Applications/OBS.app"
+OBS_EXTENSION="$OBS_APP/Contents/Library/SystemExtensions/com.obsproject.obs-studio.mac-camera-extension.systemextension"
+OBS_EXTENSION_ID="com.obsproject.obs-studio.mac-camera-extension"
 BUILD_APP="$ROOT/.build/ASCII Camera.app"
 LAUNCH_AGENT="$HOME/Library/LaunchAgents/com.yigit.asciicamera.plist"
 LAUNCH_JOB="gui/$(id -u)/com.yigit.asciicamera"
 
-if [[ ! -d "$OBS_PLUGIN" && ! -d "$DAL_PLUGIN" ]]; then
-  echo "The free installer needs the 552 KB legacy camera plug-in once."
-  echo "Install OBS temporarily, or place obs-mac-virtualcam.plugin at:"
-  echo "  $OBS_PLUGIN"
+if [[ ! -d "$OBS_EXTENSION" ]]; then
+  echo "The free installer needs OBS's signed Camera Extension."
+  echo "Install the current OBS release in /Applications, then rerun this script."
   exit 1
 fi
 
@@ -26,27 +25,30 @@ codesign --force --deep --sign - --identifier com.yigit.asciicamera "$BUILD_APP"
 
 sudo rm -rf "/Applications/ASCII Camera.app"
 sudo ditto "$BUILD_APP" "/Applications/ASCII Camera.app"
-if [[ ! -d "$DAL_PLUGIN" ]]; then
-  sudo mkdir -p "$DAL_DIR"
-  sudo ditto "$OBS_PLUGIN" "$DAL_PLUGIN"
-fi
 sudo mkdir -p /usr/local/bin
 sudo install -m 755 "$ROOT/bin/asciicam" /usr/local/bin/asciicam
 mkdir -p "$HOME/Library/LaunchAgents"
 launchctl bootout "$LAUNCH_JOB" >/dev/null 2>&1 || true
 install -m 644 "$ROOT/Native/LegacyHost/com.yigit.asciicamera.plist" "$LAUNCH_AGENT"
 if ! launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT"; then
-  echo "Could not load the ASCII Camera agent. Make sure OBS is fully quit, then rerun this installer."
+  echo "Could not load the ASCII Camera agent. Rerun this installer from your logged-in desktop session."
   exit 1
 fi
 
 echo
-echo "Installed the free ASCII Camera host and standalone 552 KB camera plug-in."
-echo "No Apple Developer subscription is required, and OBS does not run."
-echo "You may uninstall OBS now; do not remove $DAL_PLUGIN."
-echo
-echo "Quit OBS, then quit and reopen Arc, Zoom, Teams, Slack, or Discord. Run: asciicam"
-echo "Select ‘OBS Virtual Camera’ in the calling app. Chrome, Safari, and Apple apps block legacy camera plug-ins."
+echo "Installed the free ASCII Camera host. No Apple Developer subscription is required."
+if systemextensionsctl list 2>/dev/null | grep -q "$OBS_EXTENSION_ID"; then
+  echo "OBS Camera Extension: activated"
+  echo "Quit OBS completely, then run: asciicam"
+else
+  echo
+  echo "ONE-TIME ACTIVATION REQUIRED:"
+  echo "  1. Run: open -a OBS --args --startvirtualcam"
+  echo "  2. Approve OBS Virtual Camera in System Settings if macOS asks."
+  echo "  3. Once OBS Virtual Camera starts, quit OBS completely."
+  echo "  4. Run: asciicam"
+fi
+echo "Daily use does not run the OBS application. Keep it installed because it owns the signed Camera Extension."
 
 if [[ -f "$HOME/.zshrc" ]] && grep -Eq '^[[:space:]]*alias[[:space:]]+asciicam=.*start\.command' "$HOME/.zshrc"; then
   echo

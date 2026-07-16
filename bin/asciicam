@@ -4,12 +4,19 @@ set -eu
 APP="/Applications/ASCII Camera.app"
 BUNDLE_ID="com.yigit.asciicamera"
 JOB="gui/$(id -u)/$BUNDLE_ID"
+OBS_EXTENSION_ID="com.obsproject.obs-studio.mac-camera-extension"
 COMMAND="${1:-start}"
 
 case "$COMMAND" in
   start)
     if [[ ! -d "$APP" ]]; then
       echo "ASCII Camera is not installed. Run scripts/install.sh from the repository first."
+      exit 1
+    fi
+    if ! systemextensionsctl list 2>/dev/null | grep -q "$OBS_EXTENSION_ID"; then
+      echo "OBS Camera Extension is not activated yet."
+      echo "Run: open -a OBS --args --startvirtualcam"
+      echo "Approve it if prompted, quit OBS, then run asciicam again."
       exit 1
     fi
     if pgrep -x "ASCII Camera" >/dev/null 2>&1; then
@@ -19,12 +26,12 @@ case "$COMMAND" in
     if launchctl print "$JOB" >/dev/null 2>&1; then
       launchctl kickstart -k "$JOB"
     else
-      # The paid Camera Extension build does not use the legacy LaunchAgent.
+      # The separately signed native Camera Extension build does not use this LaunchAgent.
       open -gj -b "$BUNDLE_ID"
     fi
     for _ in {1..30}; do
       if pgrep -x "ASCII Camera" >/dev/null 2>&1; then
-        if launchctl print "$JOB" >/dev/null 2>&1; then
+        if systemextensionsctl list 2>/dev/null | grep -q "$OBS_EXTENSION_ID"; then
           echo "ASCII Camera is running at 240 columns. Select ‘OBS Virtual Camera’ in your calling app."
         else
           echo "ASCII Camera is running at 240 columns. Select ‘ASCII Camera’ in your calling app."
@@ -52,10 +59,10 @@ case "$COMMAND" in
     else
       echo "host: stopped"
     fi
-    if [[ -d "/Library/CoreMediaIO/Plug-Ins/DAL/obs-mac-virtualcam.plugin" ]]; then
-      echo "legacy driver: installed"
+    if systemextensionsctl list 2>/dev/null | grep -q "$OBS_EXTENSION_ID"; then
+      echo "modern driver: activated"
     else
-      echo "legacy driver: not installed"
+      echo "modern driver: not activated"
     fi
     if systemextensionsctl list 2>/dev/null | grep -q "com.yigit.asciicamera.extension"; then
       systemextensionsctl list 2>/dev/null | grep "com.yigit.asciicamera.extension"

@@ -34,6 +34,11 @@ func runTests() throws {
     try expect(bufferContainsBothBlackAndWhite(defaultResult), "240-column output should contain glyph and background pixels")
     print(String(format: "240-column render: %.1f ms", defaultRenderMilliseconds))
 
+    let obsRenderer = AsciiRenderer(settings: RenderSettings(columns: 48), outputWidth: 1920, outputHeight: 1080)
+    guard let obsResult = obsRenderer.render(source) else { throw TestFailure.failed("OBS-sized renderer returned nil") }
+    try expect(CVPixelBufferGetWidth(obsResult) == 1920, "OBS extension output width should be 1920")
+    try expect(CVPixelBufferGetHeight(obsResult) == 1080, "OBS extension output height should be 1080")
+
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     let url = directory.appendingPathComponent("frames")
     let writer = try SharedFrameStore(url: url, width: 8, height: 4)
