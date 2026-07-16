@@ -9,7 +9,9 @@ permissions:
 
 jobs:
   test:
-    runs-on: macos-14
+    # Swift tools 6.0 is required by Package.swift. The macOS 14 image still
+    # defaults to Swift 5.10, while macos-15 ships a Swift 6 toolchain.
+    runs-on: macos-15
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
