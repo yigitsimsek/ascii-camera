@@ -43,14 +43,14 @@ public final class AsciiRenderer: @unchecked Sendable {
         var colors: [MatrixColor] = []
         for bucket in 0..<matrixBrightnessBuckets {
             let progress = Double(bucket) / Double(matrixBrightnessBuckets - 1)
-            let intensity = 0.16 + 0.84 * progress
+            let green = 0.55 + 0.40 * progress
             colors.append(MatrixColor(
-                blue: UInt16(round(255 * 0.055 * intensity)),
-                green: UInt16(round(255 * (0.16 + 0.84 * intensity))),
-                red: UInt16(round(255 * 0.025 * intensity))
+                blue: UInt16(round(255 * 0.12 * green)),
+                green: UInt16(round(255 * green)),
+                red: UInt16(round(255 * 0.04 * green))
             ))
         }
-        colors.append(MatrixColor(blue: 219, green: 255, red: 199))
+        colors.append(MatrixColor(blue: 140, green: 255, red: 100))
         return colors
     }()
     private static let characters = (32...126).compactMap(UnicodeScalar.init).map(Character.init)

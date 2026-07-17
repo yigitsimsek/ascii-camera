@@ -501,14 +501,14 @@ function applyMatrixEffect(timestamp) {
   outputCtx.globalCompositeOperation = 'multiply';
   for (let bucket = 0; bucket < MATRIX_BRIGHTNESS_BUCKETS; bucket++) {
     const progress = bucket / (MATRIX_BRIGHTNESS_BUCKETS - 1);
-    const intensity = 0.16 + 0.84 * progress;
-    const red = Math.round(255 * 0.025 * intensity);
-    const green = Math.round(255 * (0.16 + 0.84 * intensity));
-    const blue = Math.round(255 * 0.055 * intensity);
+    const greenIntensity = 0.55 + 0.40 * progress;
+    const red = Math.round(255 * 0.04 * greenIntensity);
+    const green = Math.round(255 * greenIntensity);
+    const blue = Math.round(255 * 0.12 * greenIntensity);
     outputCtx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
     outputCtx.fill(paths[bucket]);
   }
-  outputCtx.fillStyle = 'rgb(199, 255, 219)';
+  outputCtx.fillStyle = 'rgb(100, 255, 140)';
   outputCtx.fill(paths[MATRIX_BRIGHTNESS_BUCKETS]);
   outputCtx.restore();
 }
