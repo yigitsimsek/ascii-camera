@@ -15,7 +15,7 @@ func expect(_ condition: @autoclosure () -> Bool, _ message: String) throws {
 
 func runTests() throws {
     try expect(RenderSettings().mode == .ascii, "ASCII should remain the default render mode")
-    try expect(RenderMode(rawValue: "matrix-old") == .matrixOld, "legacy Matrix mode should remain addressable by its CLI value")
+    try expect(RenderMode.allCases == [.ascii, .matrix], "only ASCII and Matrix render modes should be exposed")
     try expect(RenderSettings().columns == 240, "default columns should be 240")
     try expect(RenderSettings().shapeContrast == 2.2, "shape contrast default changed")
     try expect(RenderSettings().mirrored, "preview should default to mirrored")
@@ -44,14 +44,6 @@ func runTests() throws {
     try expect(bufferContainsMatrixGreen(matrixAtStart), "Matrix mode should tint the existing ASCII glyphs green")
     try expect(bufferContainsShinyMatrixHead(matrixAtStart), "Matrix mode should include near-white mint trail heads")
     try expect(matrixPreservesAsciiMask(ascii: explicitAscii, matrix: matrixAtStart), "Matrix mode must not create or replace ASCII glyph shapes")
-
-    let matrixOldRenderer = AsciiRenderer(settings: RenderSettings(mode: .matrixOld, columns: 48))
-    guard let matrixOld = matrixOldRenderer.render(source, at: 0) else {
-        throw TestFailure.failed("legacy Matrix renderer returned nil")
-    }
-    try expect(bufferContainsMatrixGreen(matrixOld), "legacy Matrix mode should retain its green treatment")
-    try expect(matrixPreservesAsciiMask(ascii: explicitAscii, matrix: matrixOld), "legacy Matrix mode must preserve ASCII glyph shapes")
-    try expect(bufferSignature(matrixOld) != firstMatrixSignature, "portrait and legacy Matrix modes should remain visually distinct")
 
     guard let matrixLater = matrixRenderer.render(source, at: 1.0) else {
         throw TestFailure.failed("animated Matrix renderer returned nil")

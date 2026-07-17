@@ -40,20 +40,6 @@ public final class AsciiRenderer: @unchecked Sendable {
     private static let sampleRadius: Float = 1.65
     private static let cacheRange = 9
     private static let matrixBrightnessBuckets = 12
-    private static let matrixOldColors: [MatrixColor] = {
-        var colors: [MatrixColor] = []
-        for bucket in 0..<matrixBrightnessBuckets {
-            let progress = Double(bucket) / Double(matrixBrightnessBuckets - 1)
-            let green = 0.55 + 0.40 * progress
-            colors.append(MatrixColor(
-                blue: UInt16(round(255 * 0.12 * green)),
-                green: UInt16(round(255 * green)),
-                red: UInt16(round(255 * 0.04 * green))
-            ))
-        }
-        colors.append(MatrixColor(blue: 140, green: 255, red: 100))
-        return colors
-    }()
     private static let characters = (32...126).compactMap(UnicodeScalar.init).map(Character.init)
     private static let internalCenters: [(Float, Float)] = [
         (1.80, 2.15), (4.20, 1.65),
@@ -358,7 +344,7 @@ public final class AsciiRenderer: @unchecked Sendable {
         if matrixStreams.count != currentColumns {
             matrixStreams = (0..<currentColumns).map { Self.makeMatrixStream(column: $0, rows: rows) }
         }
-        if settings.mode == .matrix { prepareMatrixToneBuffers() }
+        prepareMatrixToneBuffers()
 
         CVPixelBufferLockBaseAddress(pixelBuffer, [])
         defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, []) }
@@ -373,16 +359,8 @@ public final class AsciiRenderer: @unchecked Sendable {
                 let progress = (time * stream.speed + stream.phase).truncatingRemainder(dividingBy: stream.cycle)
                 let head = progress - stream.length
                 let calculatedBucket = matrixBucket(row: row, head: head, length: stream.length)
-                let bucket = settings.mode == .matrix && !stream.portraitActive ? 0 : calculatedBucket
-                let color: MatrixColor
-                switch settings.mode {
-                case .matrix:
-                    color = matrixColor(row: row, column: column, bucket: bucket)
-                case .matrixOld:
-                    color = Self.matrixOldColors[bucket]
-                case .ascii:
-                    return
-                }
+                let bucket = stream.portraitActive ? calculatedBucket : 0
+                let color = matrixColor(row: row, column: column, bucket: bucket)
                 let xStart = column * outputWidth / currentColumns
                 let xEnd = (column + 1) * outputWidth / currentColumns
 

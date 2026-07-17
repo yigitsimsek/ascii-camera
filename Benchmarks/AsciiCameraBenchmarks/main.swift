@@ -4,7 +4,7 @@ import Foundation
 
 let source = makeSource(width: 1280, height: 720)
 let columnCounts = [48, 96, 120, 180, 240]
-let modes: [RenderMode] = [.ascii, .matrixOld, .matrix]
+let modes: [RenderMode] = [.ascii, .matrix]
 let iterations = 3
 
 print("ASCII Camera release benchmark (1920x1080 output, \(iterations) measured frames)")

@@ -523,49 +523,6 @@ function applyMatrixEffect(timestamp) {
   outputCtx.restore();
 }
 
-function applyMatrixOldEffect(timestamp) {
-  const paths = Array.from({ length: MATRIX_BRIGHTNESS_BUCKETS + 1 }, () => new Path2D());
-  const cellWidth = output.width / currentColumns;
-  const cellHeight = output.height / currentRows;
-  const time = timestamp / 1000;
-
-  for (let column = 0; column < currentColumns; column++) {
-    const stream = matrixStreams[column];
-    const progress = (time * stream.speed + stream.phase) % stream.cycle;
-    const head = progress - stream.length;
-    let runStart = 0;
-    let runBucket = matrixBucket(0, head, stream.length);
-
-    for (let row = 1; row <= currentRows; row++) {
-      const bucket = row < currentRows ? matrixBucket(row, head, stream.length) : -1;
-      if (bucket === runBucket) continue;
-      paths[runBucket].rect(
-        column * cellWidth,
-        runStart * cellHeight,
-        cellWidth + 0.5,
-        (row - runStart) * cellHeight + 0.5,
-      );
-      runStart = row;
-      runBucket = bucket;
-    }
-  }
-
-  outputCtx.save();
-  outputCtx.globalCompositeOperation = 'multiply';
-  for (let bucket = 0; bucket < MATRIX_BRIGHTNESS_BUCKETS; bucket++) {
-    const progress = bucket / (MATRIX_BRIGHTNESS_BUCKETS - 1);
-    const greenIntensity = 0.55 + 0.40 * progress;
-    const red = Math.round(255 * 0.04 * greenIntensity);
-    const green = Math.round(255 * greenIntensity);
-    const blue = Math.round(255 * 0.12 * greenIntensity);
-    outputCtx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
-    outputCtx.fill(paths[bucket]);
-  }
-  outputCtx.fillStyle = 'rgb(100, 255, 140)';
-  outputCtx.fill(paths[MATRIX_BRIGHTNESS_BUCKETS]);
-  outputCtx.restore();
-}
-
 function prepareMatrixToneBuffers() {
   const cellCount = currentColumns * currentRows;
   if (matrixLuminanceBuffer.length !== cellCount) {
@@ -662,7 +619,6 @@ function renderLoop(timestamp) {
     collectVectors();
     renderAscii();
     if (inputs.mode.value === 'matrix') applyMatrixEffect(timestamp);
-    if (inputs.mode.value === 'matrix-old') applyMatrixOldEffect(timestamp);
 
     renderedFrames++;
     const elapsed = timestamp - fpsWindowStart;

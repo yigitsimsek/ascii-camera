@@ -51,10 +51,6 @@ Black background pixels remain black, and switching back to ASCII requires no
 renderer rebuild. The native color pass skips exact-black background pixels,
 avoiding color arithmetic for most of the 1920x1080 output surface.
 
-The `matrix-old` compatibility mode uses the same post-processing boundary and
-stream timing with the earlier uniform green palette. It exists only for live
-visual comparison; both Matrix modes consume the identical matched glyph frame.
-
 ## Key decisions
 
 ### Reuse the signed OBS Camera Extension
