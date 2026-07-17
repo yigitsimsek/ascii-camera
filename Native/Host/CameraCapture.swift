@@ -32,7 +32,7 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
     init(modernSink: OBSModernCameraSink) {
         self.modernSink = modernSink
         renderer = AsciiRenderer(
-            settings: RenderSettings(columns: Self.storedColumns(), mirrored: false),
+            settings: RenderSettings(mode: Self.storedMode(), columns: Self.storedColumns(), mirrored: false),
             outputWidth: 1920,
             outputHeight: 1080
         )
@@ -70,7 +70,7 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
 
         queue.async { [weak self] in self?.session.startRunning() }
         logger.notice("Capturing from \(camera.localizedName, privacy: .public)")
-        logger.notice("Renderer configured for \(self.renderer.settings.columns) columns in camera-native orientation")
+        logger.notice("Renderer configured for \(self.renderer.settings.mode.rawValue, privacy: .public) mode at \(self.renderer.settings.columns) columns in camera-native orientation")
         if #available(macOS 15.0, *) {
             logger.notice("Background Replacement for ASCII Camera: \(AVCaptureDevice.isBackgroundReplacementEnabled ? "enabled" : "disabled", privacy: .public)")
         }
@@ -90,6 +90,18 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
             guard settings != self.renderer.settings else { return }
             self.renderer.settings = settings
             self.logger.notice("Live renderer update: \(settings.columns) columns")
+        }
+    }
+
+    func setMode(_ mode: RenderMode) {
+        queue.async { [weak self] in
+            guard let self else { return }
+            var settings = self.renderer.settings
+            settings.mode = mode
+            settings.mirrored = false
+            guard settings != self.renderer.settings else { return }
+            self.renderer.settings = settings
+            self.logger.notice("Live renderer mode: \(mode.rawValue, privacy: .public)")
         }
     }
 
@@ -167,5 +179,10 @@ final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
     static func storedColumns() -> Int {
         let value = (UserDefaults.standard.object(forKey: "columns") as? NSNumber)?.intValue ?? 240
         return max(48, min(240, value))
+    }
+
+    static func storedMode() -> RenderMode {
+        let value = UserDefaults.standard.string(forKey: "mode") ?? RenderMode.ascii.rawValue
+        return RenderMode(rawValue: value) ?? .ascii
     }
 }

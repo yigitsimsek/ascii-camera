@@ -1,6 +1,12 @@
 import Foundation
 
+public enum RenderMode: String, Sendable, Equatable, CaseIterable {
+    case ascii
+    case matrix
+}
+
 public struct RenderSettings: Sendable, Equatable {
+    public var mode: RenderMode
     public var columns: Int
     public var shapeContrast: Float
     public var directionalContrast: Float
@@ -9,6 +15,7 @@ public struct RenderSettings: Sendable, Equatable {
     public var inverted: Bool
 
     public init(
+        mode: RenderMode = .ascii,
         columns: Int = 240,
         shapeContrast: Float = 2.2,
         directionalContrast: Float = 1.7,
@@ -16,6 +23,7 @@ public struct RenderSettings: Sendable, Equatable {
         mirrored: Bool = true,
         inverted: Bool = false
     ) {
+        self.mode = mode
         self.columns = max(48, min(240, columns))
         self.shapeContrast = shapeContrast
         self.directionalContrast = directionalContrast

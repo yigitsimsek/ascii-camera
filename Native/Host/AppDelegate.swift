@@ -1,4 +1,5 @@
 import AppKit
+import AsciiCameraCore
 import AsciiCameraOBSBridge
 @preconcurrency import AVFoundation
 import OSLog
@@ -10,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
     private var capture: CameraCapture?
     private var commandTimer: Timer?
     private var lastColumns = 240
+    private var lastMode: RenderMode = .ascii
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installCommandPolling()
@@ -66,6 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
     private func installCommandPolling() {
         UserDefaults.standard.synchronize()
         lastColumns = CameraCapture.storedColumns()
+        lastMode = CameraCapture.storedMode()
         commandTimer = Timer.scheduledTimer(
             timeInterval: 0.25,
             target: self,
@@ -82,6 +85,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
         if columns != lastColumns {
             lastColumns = columns
             capture?.setColumns(columns)
+        }
+
+        let mode = CameraCapture.storedMode()
+        if mode != lastMode {
+            lastMode = mode
+            capture?.setMode(mode)
         }
 
         let request = UserDefaults.standard.string(forKey: "effectsRequest") ?? ""

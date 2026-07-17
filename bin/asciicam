@@ -18,6 +18,15 @@ current_columns() {
   fi
 }
 
+current_mode() {
+  local value
+  value="$(defaults read "$SETTINGS_DOMAIN" mode 2>/dev/null || true)"
+  case "$value" in
+    ascii|matrix) echo "$value" ;;
+    *) echo "ascii" ;;
+  esac
+}
+
 obs_extension_state() {
   local line
   line="$(systemextensionsctl list 2>/dev/null | grep -F "$OBS_EXTENSION_ID" || true)"
@@ -62,7 +71,7 @@ case "$COMMAND" in
     fi
     for _ in {1..30}; do
       if pgrep -x "ASCII Camera" >/dev/null 2>&1; then
-        echo "ASCII Camera is running at $(current_columns) columns. Select ‘OBS Virtual Camera’ in your calling app."
+        echo "ASCII Camera is running in $(current_mode) mode at $(current_columns) columns. Select ‘OBS Virtual Camera’ in your calling app."
         exit 0
       fi
       sleep 0.1
@@ -87,6 +96,7 @@ case "$COMMAND" in
       echo "host: stopped"
     fi
     echo "modern driver: $(obs_extension_state)"
+    echo "mode: $(current_mode)"
     echo "columns: $(current_columns)"
     if systemextensionsctl list 2>/dev/null | grep -q "com.yigit.asciicamera.extension"; then
       systemextensionsctl list 2>/dev/null | grep "com.yigit.asciicamera.extension"
@@ -109,6 +119,23 @@ case "$COMMAND" in
       echo "Columns set to $VALUE for the next start."
     fi
     ;;
+  mode)
+    VALUE="${2:-}"
+    if [[ -z "$VALUE" ]]; then
+      echo "mode: $(current_mode)"
+      exit 0
+    fi
+    if [[ "$VALUE" != "ascii" && "$VALUE" != "matrix" ]]; then
+      echo "Mode must be either ascii or matrix."
+      exit 2
+    fi
+    defaults write "$SETTINGS_DOMAIN" mode -string "$VALUE"
+    if pgrep -x "ASCII Camera" >/dev/null 2>&1; then
+      echo "Mode changed to $VALUE live."
+    else
+      echo "Mode set to $VALUE for the next start."
+    fi
+    ;;
   effects)
     if ! pgrep -x "ASCII Camera" >/dev/null 2>&1; then
       "$0" start
@@ -120,7 +147,7 @@ case "$COMMAND" in
     exec log stream --style compact --level info --predicate 'subsystem BEGINSWITH "com.yigit.asciicamera"'
     ;;
   *)
-    echo "Usage: asciicam [start|stop|status|columns [48-240]|effects|logs]"
+    echo "Usage: asciicam [start|stop|status|mode [ascii|matrix]|columns [48-240]|effects|logs]"
     exit 2
     ;;
 esac
