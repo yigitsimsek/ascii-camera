@@ -48,7 +48,8 @@ local luminance gradients lift contours, and time-based trails add restrained
 motion. Portrait mode activates rain on a sparse deterministic subset of
 columns, allowing stronger moving highlights without overpowering the subject.
 Black background pixels remain black, and switching back to ASCII requires no
-renderer rebuild.
+renderer rebuild. The native color pass skips exact-black background pixels,
+avoiding color arithmetic for most of the 1920x1080 output surface.
 
 The `matrix-old` compatibility mode uses the same post-processing boundary and
 stream timing with the earlier uniform green palette. It exists only for live

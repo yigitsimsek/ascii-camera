@@ -389,9 +389,14 @@ public final class AsciiRenderer: @unchecked Sendable {
                 for y in yStart..<yEnd {
                     var pixel = base.advanced(by: y * bytesPerRow + xStart * 4).assumingMemoryBound(to: UInt8.self)
                     for _ in xStart..<xEnd {
-                        pixel[0] = UInt8((UInt16(pixel[0]) * color.blue + 127) / 255)
-                        pixel[1] = UInt8((UInt16(pixel[1]) * color.green + 127) / 255)
-                        pixel[2] = UInt8((UInt16(pixel[2]) * color.red + 127) / 255)
+                        // drawAscii produces grayscale glyphs over exact black.
+                        // Ignore background pixels instead of doing three color
+                        // multiplications for the majority of the 1080p frame.
+                        if pixel[1] != 0 {
+                            pixel[0] = UInt8((UInt16(pixel[0]) * color.blue + 127) / 255)
+                            pixel[1] = UInt8((UInt16(pixel[1]) * color.green + 127) / 255)
+                            pixel[2] = UInt8((UInt16(pixel[2]) * color.red + 127) / 255)
+                        }
                         pixel = pixel.advanced(by: 4)
                     }
                 }

@@ -142,11 +142,11 @@ uniform green treatment for live comparison.
 
 | Columns | Rows | ASCII | Matrix old | Matrix portrait |
 | ---: | ---: | ---: | ---: | ---: |
-| 48 | 16 | 2.9 ms | 8.8 ms | 9.0 ms |
-| 96 | 31 | 6.1 ms | 12.2 ms | 12.3 ms |
-| 120 | 39 | 7.6 ms | 14.4 ms | 14.4 ms |
-| 180 | 59 | 16.5 ms | 22.9 ms | 22.4 ms |
-| 240 | 78 | 21.0 ms | 27.7 ms | 28.7 ms |
+| 48 | 16 | 3.0 ms | 6.0 ms | 6.4 ms |
+| 96 | 31 | 6.1 ms | 9.5 ms | 9.5 ms |
+| 120 | 39 | 7.8 ms | 11.4 ms | 11.7 ms |
+| 180 | 59 | 15.7 ms | 20.2 ms | 20.3 ms |
+| 240 | 78 | 21.0 ms | 27.0 ms | 27.1 ms |
 
 These are renderer-only medians over three measured frames after one warmup;
 they are not end-to-end latency claims. Matrix adds an in-place color pass
