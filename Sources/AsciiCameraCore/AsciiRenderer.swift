@@ -17,6 +17,7 @@ public final class AsciiRenderer: @unchecked Sendable {
         let phase: Double
         let cycle: Double
         let portraitActive: Bool
+        let whiteHead: Bool
     }
 
     private struct MatrixColor {
@@ -421,18 +422,19 @@ public final class AsciiRenderer: @unchecked Sendable {
         let edge = Double(matrixEdgeBuffer[cellIndex])
         let portrait = min(0.98, 0.50 + 0.38 * pow(luminance, 0.70) + 0.28 * edge)
         let isHead = bucket == Self.matrixBrightnessBuckets
-        let headTaper = max(0, min(
-            1,
-            Double(bucket - (Self.matrixBrightnessBuckets - 3)) / 2
-        ))
-        let shine = isHead ? 1 : 0.22 * headTaper
+        let whiteHead = matrixStreams[column].whiteHead
+        let headTaper = whiteHead
+            ? max(0, min(1, Double(bucket - (Self.matrixBrightnessBuckets - 3)) / 2))
+            : 0
+        let shine = whiteHead ? (isHead ? 1 : 0.22 * headTaper) : 0
         let trail = isHead
-            ? 0.30
+            ? (whiteHead ? 0.30 : 0.26)
             : 0.18 * Double(bucket) / Double(Self.matrixBrightnessBuckets - 1)
         let green = min(1, portrait + trail)
         let highlight = min(
             1,
-            pow(luminance, 0.80) + 0.45 * edge + (isHead ? 0.32 : 0.10 * headTaper)
+            pow(luminance, 0.80) + 0.45 * edge
+                + (isHead ? (whiteHead ? 0.32 : 0.24) : 0.10 * headTaper)
         )
 
         return MatrixColor(
@@ -464,7 +466,15 @@ public final class AsciiRenderer: @unchecked Sendable {
         let cycle = Double(rows) + length + gap
         let phase = unitInterval(matrixHash(seed)) * cycle
         let portraitActive = unitInterval(matrixHash(seed ^ 0x5f356495a3c2d987)) < 0.36
-        return MatrixStream(length: length, speed: speed, phase: phase, cycle: cycle, portraitActive: portraitActive)
+        let whiteHead = unitInterval(matrixHash(seed ^ 0xd6e8feb86659fd93)) < 0.25
+        return MatrixStream(
+            length: length,
+            speed: speed,
+            phase: phase,
+            cycle: cycle,
+            portraitActive: portraitActive,
+            whiteHead: whiteHead
+        )
     }
 
     private static func unitInterval(_ value: UInt64) -> Double {
