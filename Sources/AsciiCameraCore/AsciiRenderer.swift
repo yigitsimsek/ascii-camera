@@ -443,16 +443,24 @@ public final class AsciiRenderer: @unchecked Sendable {
         let edge = Double(matrixEdgeBuffer[cellIndex])
         let portrait = min(0.98, 0.50 + 0.38 * pow(luminance, 0.70) + 0.28 * edge)
         let isHead = bucket == Self.matrixBrightnessBuckets
+        let headTaper = max(0, min(
+            1,
+            Double(bucket - (Self.matrixBrightnessBuckets - 3)) / 2
+        ))
+        let shine = isHead ? 1 : 0.22 * headTaper
         let trail = isHead
-            ? 0.26
+            ? 0.30
             : 0.18 * Double(bucket) / Double(Self.matrixBrightnessBuckets - 1)
         let green = min(1, portrait + trail)
-        let highlight = min(1, pow(luminance, 0.80) + 0.45 * edge + (isHead ? 0.24 : 0))
+        let highlight = min(
+            1,
+            pow(luminance, 0.80) + 0.45 * edge + (isHead ? 0.32 : 0.10 * headTaper)
+        )
 
         return MatrixColor(
-            blue: UInt16(round(255 * green * (0.08 + 0.55 * highlight))),
+            blue: UInt16(round(255 * green * min(1, 0.08 + 0.55 * highlight + 0.40 * shine))),
             green: UInt16(round(255 * green)),
-            red: UInt16(round(255 * green * (0.03 + 0.45 * highlight)))
+            red: UInt16(round(255 * green * min(1, 0.03 + 0.45 * highlight + 0.44 * shine)))
         )
     }
 
