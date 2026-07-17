@@ -12,7 +12,9 @@ asciicam
 
 The daily workflow has no browser page, OBS process, scene, screen capture,
 Dock icon, or manual routing step. The renderer defaults to 240 columns and can
-be reconfigured while capture is running.
+be reconfigured while capture is running. An optional Matrix mode keeps the
+same shape-matched glyphs and adds animated green falling trails as a
+post-processing effect.
 
 > [!IMPORTANT]
 > The free installation uses the signed Camera Extension bundled with OBS
@@ -38,7 +40,8 @@ system video effects.
 flowchart LR
     C["Physical or Continuity Camera"] --> H["Headless AVFoundation host"]
     H --> R["Shape-aware ASCII renderer"]
-    R --> B["CoreMediaIO OBS bridge"]
+    R --> M["Optional Matrix post-process"]
+    M --> B["CoreMediaIO OBS bridge"]
     B --> E["Signed OBS Camera Extension"]
     E --> A["Meet, Slack, Zoom, Photo Booth"]
     CLI["asciicam"] --> H
@@ -50,6 +53,7 @@ decisions, trust assumptions, and the optional first-party extension path.
 ## Features
 
 - Shape-aware ASCII matching with a 9^6 glyph lookup cache
+- Live Matrix styling that preserves the matched ASCII glyph shapes
 - 48–240 columns, adjustable without restarting the camera
 - 1920x1080 BGRA virtual-camera output
 - Headless per-user LaunchAgent controlled by one CLI
@@ -113,7 +117,10 @@ they refresh their camera lists.
 
 ```text
 asciicam          start the headless camera host
-asciicam status   show host, extension, and column state
+asciicam status   show host, extension, mode, and column state
+asciicam mode     show the current render mode
+asciicam mode ascii|matrix
+                  change render mode live (default: ascii)
 asciicam columns  show the current column count
 asciicam columns N
                   change columns live (48–240; default 240)
@@ -130,16 +137,18 @@ while the host is active to choose a Background specifically for ASCII Camera.
 Steady-state release measurements on the tested M1 Pro, rendering a 1280x720
 source into a 1920x1080 output buffer:
 
-| Columns | Rows | Median render time |
-| ---: | ---: | ---: |
-| 48 | 16 | 2.9 ms |
-| 96 | 31 | 5.9 ms |
-| 120 | 39 | 7.9 ms |
-| 180 | 59 | 15.7 ms |
-| 240 | 78 | 20.6 ms |
+| Columns | Rows | ASCII median | Matrix median |
+| ---: | ---: | ---: | ---: |
+| 48 | 16 | 2.7 ms | 8.6 ms |
+| 96 | 31 | 5.8 ms | 12.8 ms |
+| 120 | 39 | 7.6 ms | 14.1 ms |
+| 180 | 59 | 15.6 ms | 21.7 ms |
+| 240 | 78 | 20.8 ms | 27.7 ms |
 
 These are renderer-only medians over three measured frames after one warmup;
-they are not end-to-end latency claims. Reproduce them locally with:
+they are not end-to-end latency claims. Matrix adds an in-place color pass
+after the same ASCII frame is finished. Reproduce measurements for both modes
+locally with:
 
 ```bash
 scripts/benchmark.sh

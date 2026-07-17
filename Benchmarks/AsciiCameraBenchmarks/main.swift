@@ -4,28 +4,31 @@ import Foundation
 
 let source = makeSource(width: 1280, height: 720)
 let columnCounts = [48, 96, 120, 180, 240]
+let modes: [RenderMode] = [.ascii, .matrix]
 let iterations = 3
 
 print("ASCII Camera release benchmark (1920x1080 output, \(iterations) measured frames)")
-print("columns,rows,median_ms")
+print("mode,columns,rows,median_ms")
 
-for columns in columnCounts {
-    let renderer = AsciiRenderer(
-        settings: RenderSettings(columns: columns, mirrored: false),
-        outputWidth: 1920,
-        outputHeight: 1080
-    )
+for mode in modes {
+    for columns in columnCounts {
+        let renderer = AsciiRenderer(
+            settings: RenderSettings(mode: mode, columns: columns, mirrored: false),
+            outputWidth: 1920,
+            outputHeight: 1080
+        )
 
-    _ = renderer.render(source)
-    var measurements: [Double] = []
-    for _ in 0..<iterations {
-        let start = DispatchTime.now().uptimeNanoseconds
         _ = renderer.render(source)
-        let elapsed = DispatchTime.now().uptimeNanoseconds - start
-        measurements.append(Double(elapsed) / 1_000_000)
+        var measurements: [Double] = []
+        for _ in 0..<iterations {
+            let start = DispatchTime.now().uptimeNanoseconds
+            _ = renderer.render(source)
+            let elapsed = DispatchTime.now().uptimeNanoseconds - start
+            measurements.append(Double(elapsed) / 1_000_000)
+        }
+        measurements.sort()
+        print("\(mode.rawValue),\(columns),\(renderer.rows),\(String(format: "%.1f", measurements[measurements.count / 2]))")
     }
-    measurements.sort()
-    print("\(columns),\(renderer.rows),\(String(format: "%.1f", measurements[measurements.count / 2]))")
 }
 
 func makeSource(width: Int, height: Int) -> CVPixelBuffer {

@@ -12,6 +12,7 @@ const cameraSelect = document.querySelector('#cameraSelect');
 const controls = document.querySelector('#controls');
 
 const inputs = {
+  mode: document.querySelector('#mode'),
   columns: document.querySelector('#columns'),
   contrast: document.querySelector('#contrast'),
   directional: document.querySelector('#directional'),
@@ -34,6 +35,7 @@ const FONT_STACK = 'Menlo, Monaco, "Courier New", monospace';
 const CHARACTERS = Array.from({ length: 95 }, (_, i) => String.fromCharCode(32 + i));
 const CACHE_RANGE = 9;
 const CACHE_SIZE = CACHE_RANGE ** 6;
+const MATRIX_BRIGHTNESS_BUCKETS = 12;
 
 const INTERNAL_CENTERS = [
   [1.80, 2.15], [4.20, 1.65],
@@ -76,6 +78,7 @@ let currentColumns = 0;
 let grayBuffer = new Float32Array(0);
 let internalBuffer = new Float32Array(0);
 let externalBuffer = new Float32Array(0);
+let matrixStreams = [];
 let cameraLabelsAvailable = false;
 
 lookupCache.fill(-1);
@@ -115,6 +118,7 @@ function updateLabels() {
 }
 
 function resetSettings() {
+  inputs.mode.value = 'ascii';
   inputs.columns.value = '240';
   inputs.contrast.value = '2.2';
   inputs.directional.value = '1.7';
@@ -285,6 +289,7 @@ function configureGrid() {
   grayBuffer = new Float32Array(pixelCount);
   internalBuffer = new Float32Array(columns * rows * 6);
   externalBuffer = new Float32Array(columns * rows * 10);
+  matrixStreams = Array.from({ length: columns }, (_, column) => makeMatrixStream(column, rows));
 }
 
 function drawCameraIntoSampler() {
@@ -462,6 +467,85 @@ function renderAscii() {
   outputCtx.restore();
 }
 
+// Matrix mode runs after the complete ASCII frame is drawn. Multiplication
+// only colors existing glyph pixels, leaving the matcher and glyph shapes
+// exactly the same as ASCII mode.
+function applyMatrixEffect(timestamp) {
+  const paths = Array.from({ length: MATRIX_BRIGHTNESS_BUCKETS + 1 }, () => new Path2D());
+  const cellWidth = output.width / currentColumns;
+  const cellHeight = output.height / currentRows;
+  const time = timestamp / 1000;
+
+  for (let column = 0; column < currentColumns; column++) {
+    const stream = matrixStreams[column];
+    const progress = (time * stream.speed + stream.phase) % stream.cycle;
+    const head = progress - stream.length;
+    let runStart = 0;
+    let runBucket = matrixBucket(0, head, stream.length);
+
+    for (let row = 1; row <= currentRows; row++) {
+      const bucket = row < currentRows ? matrixBucket(row, head, stream.length) : -1;
+      if (bucket === runBucket) continue;
+      paths[runBucket].rect(
+        column * cellWidth,
+        runStart * cellHeight,
+        cellWidth + 0.5,
+        (row - runStart) * cellHeight + 0.5,
+      );
+      runStart = row;
+      runBucket = bucket;
+    }
+  }
+
+  outputCtx.save();
+  outputCtx.globalCompositeOperation = 'multiply';
+  for (let bucket = 0; bucket < MATRIX_BRIGHTNESS_BUCKETS; bucket++) {
+    const progress = bucket / (MATRIX_BRIGHTNESS_BUCKETS - 1);
+    const intensity = 0.16 + 0.84 * progress;
+    const red = Math.round(255 * 0.025 * intensity);
+    const green = Math.round(255 * (0.16 + 0.84 * intensity));
+    const blue = Math.round(255 * 0.055 * intensity);
+    outputCtx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
+    outputCtx.fill(paths[bucket]);
+  }
+  outputCtx.fillStyle = 'rgb(199, 255, 219)';
+  outputCtx.fill(paths[MATRIX_BRIGHTNESS_BUCKETS]);
+  outputCtx.restore();
+}
+
+function matrixBucket(row, head, length) {
+  const distance = head - row;
+  if (Math.abs(distance) < 0.55) return MATRIX_BRIGHTNESS_BUCKETS;
+  if (distance < 0 || distance >= length) return 0;
+  const trail = Math.pow(1 - distance / length, 1.45);
+  return Math.max(1, Math.min(
+    MATRIX_BRIGHTNESS_BUCKETS - 1,
+    Math.round(trail * (MATRIX_BRIGHTNESS_BUCKETS - 1)),
+  ));
+}
+
+function makeMatrixStream(column, rows) {
+  const seed = matrixHash(column ^ (rows << 16));
+  const lengthLimit = Math.max(8, Math.min(28, Math.floor(rows / 2)));
+  const length = 8 + ((seed >>> 8) % Math.max(1, lengthLimit - 7));
+  const speed = 5 + unitInterval(seed ^ 0x68bc21eb) * 8;
+  const gap = 3 + unitInterval(seed ^ 0x02e5be93) * 16;
+  const cycle = rows + length + gap;
+  const phase = unitInterval(seed ^ 0x967a889b) * cycle;
+  return { length, speed, phase, cycle };
+}
+
+function unitInterval(value) {
+  return matrixHash(value) / 0xffffffff;
+}
+
+function matrixHash(input) {
+  let value = input >>> 0;
+  value = Math.imul(value ^ (value >>> 16), 0x7feb352d);
+  value = Math.imul(value ^ (value >>> 15), 0x846ca68b);
+  return (value ^ (value >>> 16)) >>> 0;
+}
+
 function renderLoop(timestamp) {
   if (!running) return;
 
@@ -473,12 +557,13 @@ function renderLoop(timestamp) {
     buildGrayBuffer();
     collectVectors();
     renderAscii();
+    if (inputs.mode.value === 'matrix') applyMatrixEffect(timestamp);
 
     renderedFrames++;
     const elapsed = timestamp - fpsWindowStart;
     if (elapsed >= 1000) {
       const fps = Math.round((renderedFrames * 1000) / elapsed);
-      status.textContent = `${currentColumns}×${currentRows} · ${fps} fps`;
+      status.textContent = `${inputs.mode.value} · ${currentColumns}×${currentRows} · ${fps} fps`;
       renderedFrames = 0;
       fpsWindowStart = timestamp;
     }

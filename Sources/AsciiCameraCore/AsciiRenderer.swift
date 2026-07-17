@@ -11,6 +11,19 @@ import VideoToolbox
 //
 // This is an independent Swift/CoreVideo adaptation for live camera frames.
 public final class AsciiRenderer: @unchecked Sendable {
+    private struct MatrixStream {
+        let length: Double
+        let speed: Double
+        let phase: Double
+        let cycle: Double
+    }
+
+    private struct MatrixColor {
+        let blue: UInt16
+        let green: UInt16
+        let red: UInt16
+    }
+
     private struct Tap {
         let x: Int
         let y: Int
@@ -25,6 +38,21 @@ public final class AsciiRenderer: @unchecked Sendable {
     private static let tileHeight = 9
     private static let sampleRadius: Float = 1.65
     private static let cacheRange = 9
+    private static let matrixBrightnessBuckets = 12
+    private static let matrixColors: [MatrixColor] = {
+        var colors: [MatrixColor] = []
+        for bucket in 0..<matrixBrightnessBuckets {
+            let progress = Double(bucket) / Double(matrixBrightnessBuckets - 1)
+            let intensity = 0.16 + 0.84 * progress
+            colors.append(MatrixColor(
+                blue: UInt16(round(255 * 0.055 * intensity)),
+                green: UInt16(round(255 * (0.16 + 0.84 * intensity))),
+                red: UInt16(round(255 * 0.025 * intensity))
+            ))
+        }
+        colors.append(MatrixColor(blue: 219, green: 255, red: 199))
+        return colors
+    }()
     private static let characters = (32...126).compactMap(UnicodeScalar.init).map(Character.init)
     private static let internalCenters: [(Float, Float)] = [
         (1.80, 2.15), (4.20, 1.65),
@@ -67,6 +95,7 @@ public final class AsciiRenderer: @unchecked Sendable {
     private var internalBuffer: [Float] = []
     private var externalBuffer: [Float] = []
     private var lookupCache = [Int16](repeating: -1, count: 531_441)
+    private var matrixStreams: [MatrixStream] = []
 
     public init(
         settings: RenderSettings = RenderSettings(),
@@ -81,13 +110,19 @@ public final class AsciiRenderer: @unchecked Sendable {
         glyphVectors = Self.buildGlyphDatabase(fontName: "Menlo" as CFString)
     }
 
-    public func render(_ source: CVPixelBuffer) -> CVPixelBuffer? {
+    public func render(
+        _ source: CVPixelBuffer,
+        at time: TimeInterval = ProcessInfo.processInfo.systemUptime
+    ) -> CVPixelBuffer? {
         configureGrid()
         guard let sampler, let output else { return nil }
         drawSource(source, into: sampler)
         buildGrayBuffer(from: sampler)
         collectVectors()
         drawAscii(into: output)
+        if settings.mode == .matrix {
+            applyMatrixEffect(to: output, at: time)
+        }
         return output
     }
 
@@ -310,6 +345,79 @@ public final class AsciiRenderer: @unchecked Sendable {
             CTLineDraw(textLine, context)
         }
         context.restoreGState()
+    }
+
+    // Matrix mode is deliberately a post-process. The complete white-on-black
+    // ASCII frame has already been produced by drawAscii, so glyph matching,
+    // spacing, and rasterization are identical in both modes. In-place color
+    // multiplication only tints existing pixels; black pixels stay black.
+    private func applyMatrixEffect(to pixelBuffer: CVPixelBuffer, at time: TimeInterval) {
+        if matrixStreams.count != currentColumns {
+            matrixStreams = (0..<currentColumns).map { Self.makeMatrixStream(column: $0, rows: rows) }
+        }
+
+        CVPixelBufferLockBaseAddress(pixelBuffer, [])
+        defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, []) }
+        guard let base = CVPixelBufferGetBaseAddress(pixelBuffer) else { return }
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
+
+        for row in 0..<rows {
+            let yStart = row * outputHeight / rows
+            let yEnd = (row + 1) * outputHeight / rows
+            for column in 0..<currentColumns {
+                let stream = matrixStreams[column]
+                let progress = (time * stream.speed + stream.phase).truncatingRemainder(dividingBy: stream.cycle)
+                let head = progress - stream.length
+                let color = Self.matrixColors[matrixBucket(row: row, head: head, length: stream.length)]
+                let xStart = column * outputWidth / currentColumns
+                let xEnd = (column + 1) * outputWidth / currentColumns
+
+                for y in yStart..<yEnd {
+                    var pixel = base.advanced(by: y * bytesPerRow + xStart * 4).assumingMemoryBound(to: UInt8.self)
+                    for _ in xStart..<xEnd {
+                        pixel[0] = UInt8((UInt16(pixel[0]) * color.blue + 127) / 255)
+                        pixel[1] = UInt8((UInt16(pixel[1]) * color.green + 127) / 255)
+                        pixel[2] = UInt8((UInt16(pixel[2]) * color.red + 127) / 255)
+                        pixel = pixel.advanced(by: 4)
+                    }
+                }
+            }
+        }
+    }
+
+    private func matrixBucket(row: Int, head: Double, length: Double) -> Int {
+        let distance = head - Double(row)
+        if abs(distance) < 0.55 { return Self.matrixBrightnessBuckets }
+        guard distance >= 0, distance < length else { return 0 }
+
+        let trail = pow(1 - distance / length, 1.45)
+        return max(1, min(
+            Self.matrixBrightnessBuckets - 1,
+            Int(round(trail * Double(Self.matrixBrightnessBuckets - 1)))
+        ))
+    }
+
+    private static func makeMatrixStream(column: Int, rows: Int) -> MatrixStream {
+        let seed = matrixHash(UInt64(column) ^ UInt64(rows) << 32)
+        let lengthLimit = max(8, min(28, rows / 2))
+        let lengthRange = max(1, lengthLimit - 7)
+        let length = Double(8 + Int((seed >> 8) % UInt64(lengthRange)))
+        let speed = 5 + unitInterval(seed >> 24) * 8
+        let gap = 3 + unitInterval(seed >> 40) * 16
+        let cycle = Double(rows) + length + gap
+        let phase = unitInterval(matrixHash(seed)) * cycle
+        return MatrixStream(length: length, speed: speed, phase: phase, cycle: cycle)
+    }
+
+    private static func unitInterval(_ value: UInt64) -> Double {
+        Double(value & 0xffff) / Double(UInt16.max)
+    }
+
+    private static func matrixHash(_ input: UInt64) -> UInt64 {
+        var value = input &+ 0x9e3779b97f4a7c15
+        value = (value ^ (value >> 30)) &* 0xbf58476d1ce4e5b9
+        value = (value ^ (value >> 27)) &* 0x94d049bb133111eb
+        return value ^ (value >> 31)
     }
 
     private static func makeKernel(centerX: Float, centerY: Float) -> Kernel {

@@ -8,7 +8,8 @@ flowchart LR
     C["FaceTime or Continuity Camera"] -->|"AVFoundation BGRA frames"| H["Headless Swift host"]
     E["macOS Video Effects"] --> C
     H --> R["Shape-aware ASCII renderer"]
-    R -->|"1920x1080 BGRA sample buffers"| B["CoreMediaIO OBS bridge"]
+    R --> M["Optional Matrix post-process"]
+    M -->|"1920x1080 BGRA sample buffers"| B["CoreMediaIO OBS bridge"]
     B --> X["Signed OBS Camera Extension"]
     X --> A["Meet, Slack, Zoom, Photo Booth"]
     CLI["asciicam CLI"] -->|"launchctl"| H
@@ -38,6 +39,13 @@ six staggered internal regions and ten neighboring regions, applies directional
 and global contrast, quantizes the vector, and looks up the nearest glyph in a
 9^6 cache. Changing the column count rebuilds the sampling grid without
 restarting capture.
+
+Matrix mode does not replace or bypass this process. The renderer first draws
+the complete white-on-black ASCII frame through the same matching and Core Text
+path. A subsequent in-place color multiplication tints only those existing
+glyph pixels with time-based green trails and bright falling heads. Black
+background pixels remain black, and switching back to ASCII requires no
+renderer rebuild.
 
 ## Key decisions
 
