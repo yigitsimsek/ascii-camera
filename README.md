@@ -53,7 +53,7 @@ decisions, trust assumptions, and the optional first-party extension path.
 ## Features
 
 - Shape-aware ASCII matching with a 9^6 glyph lookup cache
-- Live Matrix styling that preserves the matched ASCII glyph shapes
+- Luminance- and edge-aware Matrix styling that preserves matched glyph shapes
 - 48–240 columns, adjustable without restarting the camera
 - 1920x1080 BGRA virtual-camera output
 - Headless per-user LaunchAgent controlled by one CLI
@@ -137,13 +137,13 @@ while the host is active to choose a Background specifically for ASCII Camera.
 Steady-state release measurements on the tested M1 Pro, rendering a 1280x720
 source into a 1920x1080 output buffer:
 
-| Columns | Rows | ASCII median | Matrix median |
+| Columns | Rows | ASCII | Matrix |
 | ---: | ---: | ---: | ---: |
-| 48 | 16 | 2.7 ms | 8.6 ms |
-| 96 | 31 | 5.8 ms | 12.8 ms |
-| 120 | 39 | 7.6 ms | 14.1 ms |
-| 180 | 59 | 15.6 ms | 21.7 ms |
-| 240 | 78 | 20.8 ms | 27.7 ms |
+| 48 | 16 | 2.8 ms | 5.7 ms |
+| 96 | 31 | 6.1 ms | 9.2 ms |
+| 120 | 39 | 7.5 ms | 11.5 ms |
+| 180 | 59 | 15.8 ms | 20.4 ms |
+| 240 | 78 | 20.9 ms | 27.2 ms |
 
 These are renderer-only medians over three measured frames after one warmup;
 they are not end-to-end latency claims. Matrix adds an in-place color pass

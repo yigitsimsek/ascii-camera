@@ -15,6 +15,7 @@ func expect(_ condition: @autoclosure () -> Bool, _ message: String) throws {
 
 func runTests() throws {
     try expect(RenderSettings().mode == .ascii, "ASCII should remain the default render mode")
+    try expect(RenderMode.allCases == [.ascii, .matrix], "only ASCII and Matrix render modes should be exposed")
     try expect(RenderSettings().columns == 240, "default columns should be 240")
     try expect(RenderSettings().shapeContrast == 2.2, "shape contrast default changed")
     try expect(RenderSettings().mirrored, "preview should default to mirrored")
@@ -41,6 +42,7 @@ func runTests() throws {
     }
     let firstMatrixSignature = bufferSignature(matrixAtStart)
     try expect(bufferContainsMatrixGreen(matrixAtStart), "Matrix mode should tint the existing ASCII glyphs green")
+    try expect(bufferContainsShinyMatrixHead(matrixAtStart), "Matrix mode should include near-white mint trail heads")
     try expect(matrixPreservesAsciiMask(ascii: explicitAscii, matrix: matrixAtStart), "Matrix mode must not create or replace ASCII glyph shapes")
 
     guard let matrixLater = matrixRenderer.render(source, at: 1.0) else {
@@ -186,6 +188,21 @@ func bufferContainsMatrixGreen(_ buffer: CVPixelBuffer) -> Bool {
         let green = Int(bytes[index + 1])
         let red = Int(bytes[index + 2])
         if green > 20, green > red * 3, green > blue * 2 { return true }
+    }
+    return false
+}
+
+func bufferContainsShinyMatrixHead(_ buffer: CVPixelBuffer) -> Bool {
+    CVPixelBufferLockBaseAddress(buffer, .readOnly)
+    defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+    guard let base = CVPixelBufferGetBaseAddress(buffer) else { return false }
+    let size = CVPixelBufferGetBytesPerRow(buffer) * CVPixelBufferGetHeight(buffer)
+    let bytes = base.assumingMemoryBound(to: UInt8.self)
+    for index in stride(from: 0, to: size, by: 4) {
+        let blue = Int(bytes[index])
+        let green = Int(bytes[index + 1])
+        let red = Int(bytes[index + 2])
+        if green > 60, blue * 100 > green * 72, red * 100 > green * 62 { return true }
     }
     return false
 }
