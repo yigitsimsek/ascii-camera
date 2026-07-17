@@ -22,7 +22,7 @@ current_mode() {
   local value
   value="$(defaults read "$SETTINGS_DOMAIN" mode 2>/dev/null || true)"
   case "$value" in
-    ascii|matrix) echo "$value" ;;
+    ascii|matrix|matrix-old) echo "$value" ;;
     *) echo "ascii" ;;
   esac
 }
@@ -125,8 +125,8 @@ case "$COMMAND" in
       echo "mode: $(current_mode)"
       exit 0
     fi
-    if [[ "$VALUE" != "ascii" && "$VALUE" != "matrix" ]]; then
-      echo "Mode must be either ascii or matrix."
+    if [[ "$VALUE" != "ascii" && "$VALUE" != "matrix" && "$VALUE" != "matrix-old" ]]; then
+      echo "Mode must be ascii, matrix, or matrix-old."
       exit 2
     fi
     defaults write "$SETTINGS_DOMAIN" mode -string "$VALUE"
@@ -147,7 +147,7 @@ case "$COMMAND" in
     exec log stream --style compact --level info --predicate 'subsystem BEGINSWITH "com.yigit.asciicamera"'
     ;;
   *)
-    echo "Usage: asciicam [start|stop|status|mode [ascii|matrix]|columns [48-240]|effects|logs]"
+    echo "Usage: asciicam [start|stop|status|mode [ascii|matrix|matrix-old]|columns [48-240]|effects|logs]"
     exit 2
     ;;
 esac

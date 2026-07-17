@@ -119,7 +119,7 @@ they refresh their camera lists.
 asciicam          start the headless camera host
 asciicam status   show host, extension, mode, and column state
 asciicam mode     show the current render mode
-asciicam mode ascii|matrix
+asciicam mode ascii|matrix|matrix-old
                   change render mode live (default: ascii)
 asciicam columns  show the current column count
 asciicam columns N
@@ -137,13 +137,16 @@ while the host is active to choose a Background specifically for ASCII Camera.
 Steady-state release measurements on the tested M1 Pro, rendering a 1280x720
 source into a 1920x1080 output buffer:
 
-| Columns | Rows | ASCII median | Matrix median |
-| ---: | ---: | ---: | ---: |
-| 48 | 16 | 2.8 ms | 8.8 ms |
-| 96 | 31 | 6.0 ms | 12.0 ms |
-| 120 | 39 | 7.6 ms | 14.2 ms |
-| 180 | 59 | 15.5 ms | 22.3 ms |
-| 240 | 78 | 20.5 ms | 28.4 ms |
+`matrix` is the portrait-graded treatment; `matrix-old` keeps the original
+uniform green treatment for live comparison.
+
+| Columns | Rows | ASCII | Matrix old | Matrix portrait |
+| ---: | ---: | ---: | ---: | ---: |
+| 48 | 16 | 2.9 ms | 8.8 ms | 9.0 ms |
+| 96 | 31 | 6.1 ms | 12.2 ms | 12.3 ms |
+| 120 | 39 | 7.6 ms | 14.4 ms | 14.4 ms |
+| 180 | 59 | 16.5 ms | 22.9 ms | 22.4 ms |
+| 240 | 78 | 21.0 ms | 27.7 ms | 28.7 ms |
 
 These are renderer-only medians over three measured frames after one warmup;
 they are not end-to-end latency claims. Matrix adds an in-place color pass

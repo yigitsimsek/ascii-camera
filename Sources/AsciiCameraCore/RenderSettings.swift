@@ -3,6 +3,7 @@ import Foundation
 public enum RenderMode: String, Sendable, Equatable, CaseIterable {
     case ascii
     case matrix
+    case matrixOld = "matrix-old"
 }
 
 public struct RenderSettings: Sendable, Equatable {
