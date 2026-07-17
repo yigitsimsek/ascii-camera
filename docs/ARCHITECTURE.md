@@ -45,8 +45,10 @@ the complete white-on-black ASCII frame through the same matching and Core Text
 path. A subsequent in-place color multiplication tints only those existing
 glyph pixels. Per-cell source luminance creates emerald-to-mint tonal depth,
 local luminance gradients lift contours, and time-based trails add restrained
-motion. Black background pixels remain black, and switching back to ASCII
-requires no renderer rebuild.
+motion. Portrait mode activates rain on a sparse deterministic subset of
+columns, allowing stronger moving highlights without overpowering the subject.
+Black background pixels remain black, and switching back to ASCII requires no
+renderer rebuild.
 
 The `matrix-old` compatibility mode uses the same post-processing boundary and
 stream timing with the earlier uniform green palette. It exists only for live

@@ -487,10 +487,13 @@ function applyMatrixEffect(timestamp) {
     const progress = (time * stream.speed + stream.phase) % stream.cycle;
     const head = progress - stream.length;
     let runStart = 0;
-    let runKey = matrixColorKey(0, column, matrixBucket(0, head, stream.length));
+    const initialBucket = stream.portraitActive ? matrixBucket(0, head, stream.length) : 0;
+    let runKey = matrixColorKey(0, column, initialBucket);
 
     for (let row = 1; row <= currentRows; row++) {
-      const bucket = row < currentRows ? matrixBucket(row, head, stream.length) : -1;
+      const bucket = row < currentRows && stream.portraitActive
+        ? matrixBucket(row, head, stream.length)
+        : 0;
       const key = row < currentRows ? matrixColorKey(row, column, bucket) : -1;
       if (key === runKey) continue;
       paths[runKey].rect(
@@ -604,9 +607,9 @@ function matrixColorKey(row, column, bucket) {
   const edge = matrixEdgeBuffer[cellIndex];
   const portrait = Math.min(0.98, 0.50 + 0.38 * Math.pow(luminance, 0.70) + 0.28 * edge);
   const isHead = bucket === MATRIX_BRIGHTNESS_BUCKETS;
-  const trail = isHead ? 0.12 : 0.09 * bucket / (MATRIX_BRIGHTNESS_BUCKETS - 1);
+  const trail = isHead ? 0.26 : 0.18 * bucket / (MATRIX_BRIGHTNESS_BUCKETS - 1);
   const green = Math.min(1, portrait + trail);
-  const highlight = Math.min(1, Math.pow(luminance, 0.80) + 0.45 * edge + (isHead ? 0.12 : 0));
+  const highlight = Math.min(1, Math.pow(luminance, 0.80) + 0.45 * edge + (isHead ? 0.24 : 0));
   const greenLevel = Math.round((green - 0.5) * 2 * (MATRIX_GREEN_LEVELS - 1));
   const highlightLevel = Math.round(highlight * (MATRIX_HIGHLIGHT_LEVELS - 1));
   return Math.max(0, Math.min(MATRIX_GREEN_LEVELS - 1, greenLevel)) * MATRIX_HIGHLIGHT_LEVELS
@@ -632,7 +635,8 @@ function makeMatrixStream(column, rows) {
   const gap = 3 + unitInterval(seed ^ 0x02e5be93) * 16;
   const cycle = rows + length + gap;
   const phase = unitInterval(seed ^ 0x967a889b) * cycle;
-  return { length, speed, phase, cycle };
+  const portraitActive = unitInterval(seed ^ 0x5f356495) < 0.36;
+  return { length, speed, phase, cycle, portraitActive };
 }
 
 function unitInterval(value) {

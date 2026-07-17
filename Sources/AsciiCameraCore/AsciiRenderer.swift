@@ -16,6 +16,7 @@ public final class AsciiRenderer: @unchecked Sendable {
         let speed: Double
         let phase: Double
         let cycle: Double
+        let portraitActive: Bool
     }
 
     private struct MatrixColor {
@@ -371,7 +372,8 @@ public final class AsciiRenderer: @unchecked Sendable {
                 let stream = matrixStreams[column]
                 let progress = (time * stream.speed + stream.phase).truncatingRemainder(dividingBy: stream.cycle)
                 let head = progress - stream.length
-                let bucket = matrixBucket(row: row, head: head, length: stream.length)
+                let calculatedBucket = matrixBucket(row: row, head: head, length: stream.length)
+                let bucket = settings.mode == .matrix && !stream.portraitActive ? 0 : calculatedBucket
                 let color: MatrixColor
                 switch settings.mode {
                 case .matrix:
@@ -437,10 +439,10 @@ public final class AsciiRenderer: @unchecked Sendable {
         let portrait = min(0.98, 0.50 + 0.38 * pow(luminance, 0.70) + 0.28 * edge)
         let isHead = bucket == Self.matrixBrightnessBuckets
         let trail = isHead
-            ? 0.12
-            : 0.09 * Double(bucket) / Double(Self.matrixBrightnessBuckets - 1)
+            ? 0.26
+            : 0.18 * Double(bucket) / Double(Self.matrixBrightnessBuckets - 1)
         let green = min(1, portrait + trail)
-        let highlight = min(1, pow(luminance, 0.80) + 0.45 * edge + (isHead ? 0.12 : 0))
+        let highlight = min(1, pow(luminance, 0.80) + 0.45 * edge + (isHead ? 0.24 : 0))
 
         return MatrixColor(
             blue: UInt16(round(255 * green * (0.08 + 0.55 * highlight))),
@@ -470,7 +472,8 @@ public final class AsciiRenderer: @unchecked Sendable {
         let gap = 3 + unitInterval(seed >> 40) * 16
         let cycle = Double(rows) + length + gap
         let phase = unitInterval(matrixHash(seed)) * cycle
-        return MatrixStream(length: length, speed: speed, phase: phase, cycle: cycle)
+        let portraitActive = unitInterval(matrixHash(seed ^ 0x5f356495a3c2d987)) < 0.36
+        return MatrixStream(length: length, speed: speed, phase: phase, cycle: cycle, portraitActive: portraitActive)
     }
 
     private static func unitInterval(_ value: UInt64) -> Double {
