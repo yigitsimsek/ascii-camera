@@ -43,9 +43,10 @@ restarting capture.
 Matrix mode does not replace or bypass this process. The renderer first draws
 the complete white-on-black ASCII frame through the same matching and Core Text
 path. A subsequent in-place color multiplication tints only those existing
-glyph pixels with time-based green trails and bright falling heads. Black
-background pixels remain black, and switching back to ASCII requires no
-renderer rebuild.
+glyph pixels. Per-cell source luminance creates emerald-to-mint tonal depth,
+local luminance gradients lift contours, and time-based trails add restrained
+motion. Black background pixels remain black, and switching back to ASCII
+requires no renderer rebuild.
 
 ## Key decisions
 

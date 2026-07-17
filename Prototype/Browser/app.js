@@ -36,6 +36,8 @@ const CHARACTERS = Array.from({ length: 95 }, (_, i) => String.fromCharCode(32 +
 const CACHE_RANGE = 9;
 const CACHE_SIZE = CACHE_RANGE ** 6;
 const MATRIX_BRIGHTNESS_BUCKETS = 12;
+const MATRIX_GREEN_LEVELS = 8;
+const MATRIX_HIGHLIGHT_LEVELS = 6;
 
 const INTERNAL_CENTERS = [
   [1.80, 2.15], [4.20, 1.65],
@@ -79,6 +81,8 @@ let grayBuffer = new Float32Array(0);
 let internalBuffer = new Float32Array(0);
 let externalBuffer = new Float32Array(0);
 let matrixStreams = [];
+let matrixLuminanceBuffer = new Float32Array(0);
+let matrixEdgeBuffer = new Float32Array(0);
 let cameraLabelsAvailable = false;
 
 lookupCache.fill(-1);
@@ -471,7 +475,9 @@ function renderAscii() {
 // only colors existing glyph pixels, leaving the matcher and glyph shapes
 // exactly the same as ASCII mode.
 function applyMatrixEffect(timestamp) {
-  const paths = Array.from({ length: MATRIX_BRIGHTNESS_BUCKETS + 1 }, () => new Path2D());
+  prepareMatrixToneBuffers();
+  const colorCount = MATRIX_GREEN_LEVELS * MATRIX_HIGHLIGHT_LEVELS;
+  const paths = Array.from({ length: colorCount }, () => new Path2D());
   const cellWidth = output.width / currentColumns;
   const cellHeight = output.height / currentRows;
   const time = timestamp / 1000;
@@ -481,36 +487,87 @@ function applyMatrixEffect(timestamp) {
     const progress = (time * stream.speed + stream.phase) % stream.cycle;
     const head = progress - stream.length;
     let runStart = 0;
-    let runBucket = matrixBucket(0, head, stream.length);
+    let runKey = matrixColorKey(0, column, matrixBucket(0, head, stream.length));
 
     for (let row = 1; row <= currentRows; row++) {
       const bucket = row < currentRows ? matrixBucket(row, head, stream.length) : -1;
-      if (bucket === runBucket) continue;
-      paths[runBucket].rect(
+      const key = row < currentRows ? matrixColorKey(row, column, bucket) : -1;
+      if (key === runKey) continue;
+      paths[runKey].rect(
         column * cellWidth,
         runStart * cellHeight,
         cellWidth + 0.5,
         (row - runStart) * cellHeight + 0.5,
       );
       runStart = row;
-      runBucket = bucket;
+      runKey = key;
     }
   }
 
   outputCtx.save();
   outputCtx.globalCompositeOperation = 'multiply';
-  for (let bucket = 0; bucket < MATRIX_BRIGHTNESS_BUCKETS; bucket++) {
-    const progress = bucket / (MATRIX_BRIGHTNESS_BUCKETS - 1);
-    const greenIntensity = 0.55 + 0.40 * progress;
-    const red = Math.round(255 * 0.04 * greenIntensity);
-    const green = Math.round(255 * greenIntensity);
-    const blue = Math.round(255 * 0.12 * greenIntensity);
-    outputCtx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
-    outputCtx.fill(paths[bucket]);
+  for (let greenLevel = 0; greenLevel < MATRIX_GREEN_LEVELS; greenLevel++) {
+    const greenIntensity = 0.5 + 0.5 * greenLevel / (MATRIX_GREEN_LEVELS - 1);
+    for (let highlightLevel = 0; highlightLevel < MATRIX_HIGHLIGHT_LEVELS; highlightLevel++) {
+      const highlight = highlightLevel / (MATRIX_HIGHLIGHT_LEVELS - 1);
+      const red = Math.round(255 * greenIntensity * (0.03 + 0.45 * highlight));
+      const green = Math.round(255 * greenIntensity);
+      const blue = Math.round(255 * greenIntensity * (0.08 + 0.55 * highlight));
+      outputCtx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
+      outputCtx.fill(paths[greenLevel * MATRIX_HIGHLIGHT_LEVELS + highlightLevel]);
+    }
   }
-  outputCtx.fillStyle = 'rgb(100, 255, 140)';
-  outputCtx.fill(paths[MATRIX_BRIGHTNESS_BUCKETS]);
   outputCtx.restore();
+}
+
+function prepareMatrixToneBuffers() {
+  const cellCount = currentColumns * currentRows;
+  if (matrixLuminanceBuffer.length !== cellCount) {
+    matrixLuminanceBuffer = new Float32Array(cellCount);
+    matrixEdgeBuffer = new Float32Array(cellCount);
+  }
+
+  for (let cellIndex = 0; cellIndex < cellCount; cellIndex++) {
+    const start = cellIndex * 6;
+    let luminance = 0;
+    for (let sampleIndex = 0; sampleIndex < 6; sampleIndex++) {
+      luminance += internalBuffer[start + sampleIndex];
+    }
+    matrixLuminanceBuffer[cellIndex] = luminance / 6;
+  }
+
+  for (let row = 0; row < currentRows; row++) {
+    const upperRow = Math.max(0, row - 1);
+    const lowerRow = Math.min(currentRows - 1, row + 1);
+    for (let column = 0; column < currentColumns; column++) {
+      const leftColumn = Math.max(0, column - 1);
+      const rightColumn = Math.min(currentColumns - 1, column + 1);
+      const horizontal = Math.abs(
+        matrixLuminanceBuffer[row * currentColumns + rightColumn]
+        - matrixLuminanceBuffer[row * currentColumns + leftColumn]
+      );
+      const vertical = Math.abs(
+        matrixLuminanceBuffer[lowerRow * currentColumns + column]
+        - matrixLuminanceBuffer[upperRow * currentColumns + column]
+      );
+      matrixEdgeBuffer[row * currentColumns + column] = Math.min(1, (horizontal + vertical) * 1.35);
+    }
+  }
+}
+
+function matrixColorKey(row, column, bucket) {
+  const cellIndex = row * currentColumns + column;
+  const luminance = matrixLuminanceBuffer[cellIndex];
+  const edge = matrixEdgeBuffer[cellIndex];
+  const portrait = Math.min(0.98, 0.50 + 0.38 * Math.pow(luminance, 0.70) + 0.28 * edge);
+  const isHead = bucket === MATRIX_BRIGHTNESS_BUCKETS;
+  const trail = isHead ? 0.12 : 0.09 * bucket / (MATRIX_BRIGHTNESS_BUCKETS - 1);
+  const green = Math.min(1, portrait + trail);
+  const highlight = Math.min(1, Math.pow(luminance, 0.80) + 0.45 * edge + (isHead ? 0.12 : 0));
+  const greenLevel = Math.round((green - 0.5) * 2 * (MATRIX_GREEN_LEVELS - 1));
+  const highlightLevel = Math.round(highlight * (MATRIX_HIGHLIGHT_LEVELS - 1));
+  return Math.max(0, Math.min(MATRIX_GREEN_LEVELS - 1, greenLevel)) * MATRIX_HIGHLIGHT_LEVELS
+    + Math.max(0, Math.min(MATRIX_HIGHLIGHT_LEVELS - 1, highlightLevel));
 }
 
 function matrixBucket(row, head, length) {

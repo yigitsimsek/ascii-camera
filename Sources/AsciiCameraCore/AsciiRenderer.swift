@@ -39,20 +39,6 @@ public final class AsciiRenderer: @unchecked Sendable {
     private static let sampleRadius: Float = 1.65
     private static let cacheRange = 9
     private static let matrixBrightnessBuckets = 12
-    private static let matrixColors: [MatrixColor] = {
-        var colors: [MatrixColor] = []
-        for bucket in 0..<matrixBrightnessBuckets {
-            let progress = Double(bucket) / Double(matrixBrightnessBuckets - 1)
-            let green = 0.55 + 0.40 * progress
-            colors.append(MatrixColor(
-                blue: UInt16(round(255 * 0.12 * green)),
-                green: UInt16(round(255 * green)),
-                red: UInt16(round(255 * 0.04 * green))
-            ))
-        }
-        colors.append(MatrixColor(blue: 140, green: 255, red: 100))
-        return colors
-    }()
     private static let characters = (32...126).compactMap(UnicodeScalar.init).map(Character.init)
     private static let internalCenters: [(Float, Float)] = [
         (1.80, 2.15), (4.20, 1.65),
@@ -96,6 +82,8 @@ public final class AsciiRenderer: @unchecked Sendable {
     private var externalBuffer: [Float] = []
     private var lookupCache = [Int16](repeating: -1, count: 531_441)
     private var matrixStreams: [MatrixStream] = []
+    private var matrixLuminanceBuffer: [Float] = []
+    private var matrixEdgeBuffer: [Float] = []
 
     public init(
         settings: RenderSettings = RenderSettings(),
@@ -355,6 +343,7 @@ public final class AsciiRenderer: @unchecked Sendable {
         if matrixStreams.count != currentColumns {
             matrixStreams = (0..<currentColumns).map { Self.makeMatrixStream(column: $0, rows: rows) }
         }
+        prepareMatrixToneBuffers()
 
         CVPixelBufferLockBaseAddress(pixelBuffer, [])
         defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, []) }
@@ -368,7 +357,8 @@ public final class AsciiRenderer: @unchecked Sendable {
                 let stream = matrixStreams[column]
                 let progress = (time * stream.speed + stream.phase).truncatingRemainder(dividingBy: stream.cycle)
                 let head = progress - stream.length
-                let color = Self.matrixColors[matrixBucket(row: row, head: head, length: stream.length)]
+                let bucket = matrixBucket(row: row, head: head, length: stream.length)
+                let color = matrixColor(row: row, column: column, bucket: bucket)
                 let xStart = column * outputWidth / currentColumns
                 let xEnd = (column + 1) * outputWidth / currentColumns
 
@@ -383,6 +373,58 @@ public final class AsciiRenderer: @unchecked Sendable {
                 }
             }
         }
+    }
+
+    private func prepareMatrixToneBuffers() {
+        let cellCount = currentColumns * rows
+        if matrixLuminanceBuffer.count != cellCount {
+            matrixLuminanceBuffer = [Float](repeating: 0, count: cellCount)
+            matrixEdgeBuffer = [Float](repeating: 0, count: cellCount)
+        }
+
+        for cellIndex in 0..<cellCount {
+            let start = cellIndex * 6
+            var luminance: Float = 0
+            for sampleIndex in 0..<6 { luminance += internalBuffer[start + sampleIndex] }
+            matrixLuminanceBuffer[cellIndex] = luminance / 6
+        }
+
+        for row in 0..<rows {
+            let upperRow = max(0, row - 1)
+            let lowerRow = min(rows - 1, row + 1)
+            for column in 0..<currentColumns {
+                let leftColumn = max(0, column - 1)
+                let rightColumn = min(currentColumns - 1, column + 1)
+                let horizontal = abs(
+                    matrixLuminanceBuffer[row * currentColumns + rightColumn]
+                    - matrixLuminanceBuffer[row * currentColumns + leftColumn]
+                )
+                let vertical = abs(
+                    matrixLuminanceBuffer[lowerRow * currentColumns + column]
+                    - matrixLuminanceBuffer[upperRow * currentColumns + column]
+                )
+                matrixEdgeBuffer[row * currentColumns + column] = min(1, (horizontal + vertical) * 1.35)
+            }
+        }
+    }
+
+    private func matrixColor(row: Int, column: Int, bucket: Int) -> MatrixColor {
+        let cellIndex = row * currentColumns + column
+        let luminance = Double(matrixLuminanceBuffer[cellIndex])
+        let edge = Double(matrixEdgeBuffer[cellIndex])
+        let portrait = min(0.98, 0.50 + 0.38 * pow(luminance, 0.70) + 0.28 * edge)
+        let isHead = bucket == Self.matrixBrightnessBuckets
+        let trail = isHead
+            ? 0.12
+            : 0.09 * Double(bucket) / Double(Self.matrixBrightnessBuckets - 1)
+        let green = min(1, portrait + trail)
+        let highlight = min(1, pow(luminance, 0.80) + 0.45 * edge + (isHead ? 0.12 : 0))
+
+        return MatrixColor(
+            blue: UInt16(round(255 * green * (0.08 + 0.55 * highlight))),
+            green: UInt16(round(255 * green)),
+            red: UInt16(round(255 * green * (0.03 + 0.45 * highlight)))
+        )
     }
 
     private func matrixBucket(row: Int, head: Double, length: Double) -> Int {
