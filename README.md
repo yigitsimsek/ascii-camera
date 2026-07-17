@@ -194,6 +194,16 @@ See [Troubleshooting](docs/TROUBLESHOOTING.md) for extension approval, camera
 permissions, stale shell aliases, video effects, and performance. Remove the
 local installation without touching OBS by running `scripts/uninstall.sh`.
 
+## Acknowledgements
+
+The shape-aware renderer is based on concepts described by Alex Harri in
+[“ASCII characters are not pixels: a deep dive into ASCII
+rendering”](https://alexharri.com/blog/ascii-rendering), including
+six-dimensional glyph vectors, staggered sampling regions, directional
+contrast enhancement, and quantized glyph lookup. This project adapts those
+ideas into an independent Swift/CoreVideo implementation for live
+virtual-camera frames.
+
 ## License
 
 [MIT](LICENSE). OBS Studio is a separate dependency distributed under its own

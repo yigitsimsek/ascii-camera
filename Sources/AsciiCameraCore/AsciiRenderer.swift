@@ -5,6 +5,11 @@ import CoreVideo
 import Foundation
 import VideoToolbox
 
+// The shape-vector renderer design is inspired by Alex Harri's article
+// "ASCII characters are not pixels: a deep dive into ASCII rendering":
+// https://alexharri.com/blog/ascii-rendering
+//
+// This is an independent Swift/CoreVideo adaptation for live camera frames.
 public final class AsciiRenderer: @unchecked Sendable {
     private struct Tap {
         let x: Int
